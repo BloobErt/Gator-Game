@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://ctvb4j0ql6t86"]
+
+[ext_resource type="PackedScene" uid="uid://cpx0epay2y1bh" path="res://Assets/Aligator.gltf" id="1_t57rm"]
+[ext_resource type="Script" uid="uid://sffrpwr7elg3" path="res://AlligatorController.gd" id="2_bqm1x"]
+
+[sub_resource type="Animation" id="Animation_bqm1x"]
+resource_name = "Bite"
+tracks/0/type = "rotation_3d"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Head")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = PackedFloat32Array()
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_36cum"]
+_data = {
+&"Bite": SubResource("Animation_bqm1x")
+}
+
+[node name="Alligator" instance=ExtResource("1_t57rm")]
+script = ExtResource("2_bqm1x")
+
+[node name="Skeleton3D" parent="Head" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Alligator Animation" type="AnimationPlayer" parent="." index="3"]
+libraries = {
+&"": SubResource("AnimationLibrary_36cum")
+}

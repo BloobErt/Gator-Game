@@ -1,9 +1,13 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8a1vsh2qydig"]
-
-[ext_resource type="PackedScene" uid="uid://cpx0epay2y1bh" path="res://Assets/Aligator.gltf" id="1_v8o5a"]
+[gd_scene format=3 uid="uid://b8a1vsh2qydig"]
 
 [node name="Node3D" type="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.50178, 0.193825, 0.102055)
 
-[node name="blockbench_export" parent="." instance=ExtResource("1_v8o5a")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.536278, -0.193825, 0.0117891)
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-3.76653e-08, 0.507448, -0.861682, 2.21813e-08, 0.861682, 0.507448, 1, 0, -4.37114e-08, -0.45795, 0.246674, 0)
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Lights"]
+transform = Transform3D(-0.013043, 0.705446, -0.708644, 0.0331965, 0.708619, 0.70481, 0.999364, -0.0143317, -0.0326609, -0.656406, 0.580422, 0)
+
+[node name="Game Manager" type="Node" parent="."]
