@@ -1,0 +1,5 @@
+[gd_scene load_steps=2 format=3 uid="uid://ctvb4j0ql6t86"]
+
+[ext_resource type="PackedScene" uid="uid://cpx0epay2y1bh" path="res://Assets/Aligator.gltf" id="1_t57rm"]
+
+[node name="blockbench_export" instance=ExtResource("1_t57rm")]
