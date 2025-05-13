@@ -86,5 +86,12 @@ func press_tooth(group_name, index_in_group):
 
 # Animates pressing a tooth down
 func _animate_press_tooth(bone_index):
-	# We'll implement this next
-	pass
+	# Get current transform
+	var current_transform = skeleton.get_bone_pose(bone_index)
+	
+	# Create a slightly pressed down transform
+	var pressed_transform = current_transform
+	pressed_transform.origin.y -= 0.05 # Move down slightly
+	
+	# Apply the new transform
+	skeleton.set_bone_pose(bone_index, pressed_transform)
