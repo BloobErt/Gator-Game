@@ -2,14 +2,14 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://lf23fo3uc70k"
+uid="uid://bi8vkt7ms8cq0"
 path.s3tc="res://.godot/imported/Aligator_4.png-e35875f436d7db126efd5e543531159e.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "a00b6ae7fa9f905a9062e2ece5cdfd62"
+"md5": "27d699a20e08a4c3703ea16a023eaa1a"
 }
 
 [deps]

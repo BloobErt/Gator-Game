@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://1yrva4up37ii"]
+
+[ext_resource type="PackedScene" uid="uid://cls37qlx3lwym" path="res://Assets/Aligator.gltf" id="1_nmxwh"]
+
+[node name="blockbench_export" instance=ExtResource("1_nmxwh")]
+
+[node name="Body" parent="." index="0"]
+visible = false
+
+[node name="Head" parent="." index="1"]
+visible = false
+
+[node name="Skeleton3D" parent="Arms" index="0"]
+bones/2/rotation = Quaternion(0.000474975, 0.000474975, 0.000474975, 1.00048)
+
+[node name="Arms" parent="Arms/Skeleton3D" index="0"]
+transform = Transform3D(0.99849, 0.0549327, 0, -0.0549327, 0.99849, 0, 0, 0, 1, 0, 0, 0)

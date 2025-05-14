@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://cls37qlx3lwym"
-path="res://.godot/imported/Aligator.gltf-2c7705a7e224fcc4e2db4a545e5eab73.scn"
+uid="uid://cpx0epay2y1bh"
+path="res://.godot/imported/Aligator.gltf-0b432b82e6d4e5abda50b152fe94c2cd.scn"
 
 [deps]
 
-source_file="res://Assets/Aligator.gltf"
-dest_files=["res://.godot/imported/Aligator.gltf-2c7705a7e224fcc4e2db4a545e5eab73.scn"]
+source_file="res://Old Assets/Aligator.gltf"
+dest_files=["res://.godot/imported/Aligator.gltf-0b432b82e6d4e5abda50b152fe94c2cd.scn"]
 
 [params]
 

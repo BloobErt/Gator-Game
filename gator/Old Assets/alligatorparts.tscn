@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://ctvb4j0ql6t86"]
 
-[ext_resource type="PackedScene" uid="uid://cpx0epay2y1bh" path="res://Assets/Aligator.gltf" id="1_t57rm"]
-[ext_resource type="Script" uid="uid://sffrpwr7elg3" path="res://AlligatorController.gd" id="2_bqm1x"]
+[ext_resource type="PackedScene" uid="uid://cpx0epay2y1bh" path="res://Old Assets/Aligator.gltf" id="1_t57rm"]
+[ext_resource type="Script" path="res://AlligatorController.gd" id="2_bqm1x"]
 
 [sub_resource type="Animation" id="Animation_mpwo5"]
 length = 0.001

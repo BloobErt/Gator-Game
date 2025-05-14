@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d4k862w1t5e8g"
-path.s3tc="res://.godot/imported/Aligator_2.png-fdf00a77f887bb83fb959bfdcf177f54.s3tc.ctex"
+uid="uid://2n2bgn74rgls"
+path.s3tc="res://.godot/imported/Aligator_1 (2).png-1ce2c236ba0d063affc86ba2adaabbc7.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 generator_parameters={
-"md5": "72757071c1ea0f919aedd3b0b3eb44fd"
+"md5": "6180d92ffb0d5a7c942abae0b1da48ea"
 }
 
 [deps]
 
-source_file="res://Assets/Aligator_2.png"
-dest_files=["res://.godot/imported/Aligator_2.png-fdf00a77f887bb83fb959bfdcf177f54.s3tc.ctex"]
+source_file="res://Old Assets/Aligator_1 (2).png"
+dest_files=["res://.godot/imported/Aligator_1 (2).png-1ce2c236ba0d063affc86ba2adaabbc7.s3tc.ctex"]
 
 [params]
 
