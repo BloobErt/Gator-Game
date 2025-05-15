@@ -1,17 +1,33 @@
-[gd_scene load_steps=2 format=3 uid="uid://1yrva4up37ii"]
+[gd_scene load_steps=7 format=3 uid="uid://1yrva4up37ii"]
 
 [ext_resource type="PackedScene" uid="uid://cls37qlx3lwym" path="res://Assets/Aligator.gltf" id="1_nmxwh"]
 
-[node name="blockbench_export" instance=ExtResource("1_nmxwh")]
+[sub_resource type="Animation" id="Animation_wnw72"]
+resource_name = "Bite"
 
-[node name="Body" parent="." index="0"]
-visible = false
+[sub_resource type="Animation" id="Animation_u7kp0"]
+resource_name = "Chomp"
 
-[node name="Head" parent="." index="1"]
-visible = false
+[sub_resource type="Animation" id="Animation_kgx0g"]
+resource_name = "Arms Flail"
 
-[node name="Skeleton3D" parent="Arms" index="0"]
-bones/2/rotation = Quaternion(0.000474975, 0.000474975, 0.000474975, 1.00048)
+[sub_resource type="Animation" id="Animation_wqswa"]
+length = 0.001
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_f1yp0"]
+_data = {
+&"Arms Flail": SubResource("Animation_kgx0g"),
+&"Bite": SubResource("Animation_wnw72"),
+&"Chomp": SubResource("Animation_u7kp0"),
+&"RESET": SubResource("Animation_wqswa")
+}
+
+[node name="Alligator" instance=ExtResource("1_nmxwh")]
 
 [node name="Arms" parent="Arms/Skeleton3D" index="0"]
 transform = Transform3D(0.99849, 0.0549327, 0, -0.0549327, 0.99849, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="3"]
+libraries = {
+&"": SubResource("AnimationLibrary_f1yp0")
+}
