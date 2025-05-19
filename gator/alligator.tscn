@@ -1,20 +1,20 @@
-[gd_scene load_steps=3 format=3 uid="uid://b8a1vsh2qydig"]
+[gd_scene load_steps=4 format=3 uid="uid://b8a1vsh2qydig"]
 
 [ext_resource type="PackedScene" uid="uid://1yrva4up37ii" path="res://AlligatorBetter.tscn" id="1_hkvc8"]
 [ext_resource type="Script" uid="uid://blpl7rdu1exwl" path="res://Scripts/TeethClickDetector.gd" id="1_squqc"]
+[ext_resource type="Script" uid="uid://dflsbiautig3x" path="res://Scripts/GameManager.gd" id="2_7bkgr"]
 
 [node name="Node3D" type="Node3D"]
+script = ExtResource("2_7bkgr")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(-3.28695e-08, 0.659201, -0.751966, 2.88146e-08, 0.751966, 0.659201, 1, 1.77636e-15, -4.37114e-08, -0.518202, 0.310006, 0)
+transform = Transform3D(-3.28695e-08, 0.659201, -0.751966, 2.88146e-08, 0.751966, 0.659201, 1, 8.88178e-15, -4.37114e-08, -0.552615, 0.361187, 0)
 script = ExtResource("1_squqc")
 
 [node name="Lights" type="Node3D" parent="."]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Lights"]
 transform = Transform3D(-0.013043, 0.705446, -0.708644, 0.0331965, 0.708619, 0.70481, 0.999364, -0.0143317, -0.0326609, -0.656406, 0.580422, 0)
-
-[node name="Game Manager" type="Node" parent="."]
 
 [node name="Alligator" parent="." instance=ExtResource("1_hkvc8")]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)

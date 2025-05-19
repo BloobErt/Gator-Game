@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://1yrva4up37ii"]
+[gd_scene load_steps=11 format=3 uid="uid://1yrva4up37ii"]
 
 [ext_resource type="PackedScene" uid="uid://cls37qlx3lwym" path="res://Assets/Aligator.gltf" id="1_nmxwh"]
 [ext_resource type="Script" uid="uid://d0d3x7n5bpvi7" path="res://Scripts/alligatorcontroller.gd" id="2_u7kp0"]
@@ -123,6 +123,108 @@ tracks/5/keys = {
 "handle_modes": PackedInt32Array(0, 1, 0, 0),
 "points": PackedFloat32Array(-0.523599, -0.25, 0, 0.0666667, 0.523599, 0, 0, 0, 0, 0, 0.174533, -4.36902e-05, 0.825467, 0, 0.825467, 0, -0.1, 0, 0.0333333, 82),
 "times": PackedFloat32Array(0, 0.0666667, 0.0667104, 0.1)
+}
+
+[sub_resource type="Animation" id="Animation_f1yp0"]
+resource_name = "Close"
+tracks/0/type = "bezier"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Body/Skeleton3D:position:x")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/1/type = "bezier"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Body/Skeleton3D:position:y")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/2/type = "bezier"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Body/Skeleton3D:position:z")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/3/type = "bezier"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Head/Skeleton3D:position:x")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/4/type = "bezier"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Head/Skeleton3D:position:y")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/5/type = "bezier"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Head/Skeleton3D:position:z")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/6/type = "bezier"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Arms/Skeleton3D:position:x")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/7/type = "bezier"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Arms/Skeleton3D:position:y")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
+}
+tracks/8/type = "bezier"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Arms/Skeleton3D:position:z")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"handle_modes": PackedInt32Array(0),
+"points": PackedFloat32Array(0, -0.25, 0, 0.25, 0),
+"times": PackedFloat32Array(0)
 }
 
 [sub_resource type="Animation" id="Animation_wnw72"]
@@ -298,6 +400,7 @@ tracks/10/keys = {
 _data = {
 &"Arms Flail": SubResource("Animation_kgx0g"),
 &"Chomp": SubResource("Animation_u7kp0"),
+&"Close": SubResource("Animation_f1yp0"),
 &"Open": SubResource("Animation_wnw72"),
 &"RESET": SubResource("Animation_wqswa")
 }
@@ -307,12 +410,6 @@ size = Vector3(0.00566959, 0.0151138, 0.0223083)
 
 [node name="Alligator" instance=ExtResource("1_nmxwh")]
 script = ExtResource("2_u7kp0")
-
-[node name="Head" parent="." index="1"]
-visible = false
-
-[node name="Arms" parent="." index="2"]
-visible = false
 
 [node name="Arms" parent="Arms/Skeleton3D" index="0"]
 transform = Transform3D(0.99849, 0.0549327, 0, -0.0549327, 0.99849, 0, 0, 0, 1, 0, 0, 0)
@@ -325,7 +422,7 @@ libraries = {
 [node name="ToothFrontLeft" type="Area3D" parent="." index="4"]
 script = ExtResource("3_kgx0g")
 
-[node name="ToothFrontLeft" type="CollisionShape3D" parent="ToothFrontLeft" index="0"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ToothFrontLeft" index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.211278, 0.0570384, -0.0468741)
 shape = SubResource("BoxShape3D_u7kp0")
 
