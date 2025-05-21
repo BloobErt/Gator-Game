@@ -1,7 +1,9 @@
 [gd_scene load_steps=8 format=3 uid="uid://ctvb4j0ql6t86"]
 
 [ext_resource type="PackedScene" uid="uid://cpx0epay2y1bh" path="res://Old Assets/Aligator.gltf" id="1_t57rm"]
-[ext_resource type="Script" uid="uid://sffrpwr7elg3" path="res://AlligatorController.gd" id="2_bqm1x"]
+
+[sub_resource type="Resource" id="Resource_3h775"]
+metadata/__load_path__ = "res://AlligatorController.gd"
 
 [sub_resource type="Animation" id="Animation_h7e4m"]
 resource_name = "Bite"
@@ -356,7 +358,7 @@ _data = {
 }
 
 [node name="Alligator" instance=ExtResource("1_t57rm")]
-script = ExtResource("2_bqm1x")
+script = SubResource("Resource_3h775")
 
 [node name="Arms" parent="." index="2"]
 transform = Transform3D(1, -1.74846e-07, 0, 1.74846e-07, 1, 0, 0, 0, 1, 0.137702, 0.111719, 0)

@@ -1,8 +1,8 @@
 [gd_resource type="Theme" load_steps=2 format=3 uid="uid://cpwk5by5vj381"]
 
-[sub_resource type="SystemFont" id="SystemFont_abrne"]
-font_names = PackedStringArray("Source Code Pro")
+[ext_resource type="FontFile" uid="uid://eradm5v1auyc" path="res://Assets/Bubby Font.ttf" id="1_yd3fu"]
 
 [resource]
-default_font = SubResource("SystemFont_abrne")
-default_font_size = 25
+default_base_scale = 2.0
+default_font = ExtResource("1_yd3fu")
+default_font_size = 48

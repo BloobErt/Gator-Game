@@ -6,6 +6,7 @@ var current_round = 1
 var score = 0
 var round_score = 0
 var level_target_score = 100  # Increases with each level
+var money = 0
 
 # Teeth values
 var teeth_values = {}
@@ -16,12 +17,14 @@ var active_artifacts = []
 
 # References
 @onready var alligator = $Alligator
+@onready var game_ui = $GameUI
+@onready var round_transition = $RoundTransition
 
 func _ready():
 	# Connect signals from alligator
 	alligator.tooth_pressed.connect(_on_tooth_pressed)
 	alligator.tooth_bit.connect(_on_tooth_bit)
-	
+	round_transition.continue_pressed.connect(_on_continue_to_shop)
 	# Start the first level
 	start_level(current_level)
 
@@ -70,6 +73,16 @@ func _on_tooth_pressed(tooth_name):
 	
 	print("Tooth ", tooth_name, " pressed! Value: ", tooth_value, " x", multiplier)
 	
+	# Get the tooth's position for the popup
+	var tooth_position = alligator.get_node(tooth_name).global_position
+	
+	# Convert 3D position to 2D screen position
+	var camera = get_viewport().get_camera_3d()
+	var screen_position = camera.unproject_position(tooth_position)
+	
+	# Show score popup
+	game_ui.show_score_popup(tooth_score, screen_position, multiplier > 1)
+	
 	# Apply artifact effects
 	tooth_score = apply_artifact_effects(tooth_score, alligator.pressed_teeth.size())
 	
@@ -97,6 +110,9 @@ func end_round():
 	# Add round score to total score
 	score += round_score
 	
+	var money_earned = round_score / 10  # Simple conversion
+	money += money_earned
+	
 	print("Round ended. Round score: ", round_score, " Total score: ", score)
 	
 	# Check if we've reached the target score
@@ -114,7 +130,7 @@ func end_round():
 		else:
 			# Move to next round
 			current_round += 1
-			start_new_round()
+			round_transition.show_results(round_score, money_earned)
 
 func generate_teeth_values(level):
 	teeth_values = {}
@@ -212,11 +228,27 @@ func display_artifacts():
 		print("- ", artifact.name, ": ", artifact.description)
 
 func update_ui():
-	# Update all UI elements with current game state
-	# For now, just print to console
-	print("Level: ", current_level, " Round: ", current_round, "/5")
-	print("Round Score: ", round_score, " Total Score: ", score, "/", level_target_score)
-	
-	# Later, you can update actual UI elements
-	# $ScoreLabel.text = "Score: " + str(score)
-	# etc.
+	if game_ui:
+		game_ui.update_score(score)
+		game_ui.update_round(current_round, 5)
+		game_ui.update_level(current_level)
+		game_ui.update_goal(level_target_score)
+		game_ui.update_money(money)
+
+func _on_continue_to_shop():
+	# Check if we've reached the target score
+	if score >= level_target_score:
+		print("Level ", current_level, " completed!")
+		# Move to next level
+		current_level += 1
+		start_level(current_level)
+	else:
+		# Check if this was the last round
+		if current_round >= 5:
+			print("Game over! Final score: ", score)
+			# Handle game over
+			# You can implement a restart button or other game over logic
+		else:
+			# Move to next round
+			current_round += 1
+			start_new_round()

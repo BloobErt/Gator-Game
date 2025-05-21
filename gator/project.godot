@@ -11,10 +11,15 @@ config_version=5
 [application]
 
 config/name="Gator"
-config/features=PackedStringArray("4.3", "Forward Plus")
+config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+
+[gui]
+
+theme/custom="uid://cpwk5by5vj381"
+theme/custom_font="uid://eradm5v1auyc"

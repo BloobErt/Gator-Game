@@ -1,0 +1,130 @@
+[gd_scene load_steps=3 format=3 uid="uid://qiletc3vogi"]
+
+[ext_resource type="Script" uid="uid://73dfhvs2cmf6" path="res://Scripts/game_ui.gd" id="1_oaw30"]
+[ext_resource type="Theme" uid="uid://cpwk5by5vj381" path="res://Theme.tres" id="1_ue6oa"]
+
+[node name="GameUI" type="CanvasLayer"]
+script = ExtResource("1_oaw30")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 100.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ue6oa")
+alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 40
+
+[node name="ScoreContainer" type="VBoxContainer" parent="TopBar/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ue6oa")
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="ScoreLabel" type="Label" parent="TopBar/MarginContainer/ScoreContainer"]
+layout_mode = 2
+text = "Score"
+horizontal_alignment = 1
+
+[node name="ScoreValue" type="Label" parent="TopBar/MarginContainer/ScoreContainer"]
+layout_mode = 2
+text = "0"
+horizontal_alignment = 1
+
+[node name="MarginContainer2" type="MarginContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_right = 40
+
+[node name="RoundContainer" type="VBoxContainer" parent="TopBar/MarginContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ue6oa")
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="RoundLabel" type="Label" parent="TopBar/MarginContainer2/RoundContainer"]
+layout_mode = 2
+text = "Round"
+horizontal_alignment = 1
+
+[node name="RoundValue" type="Label" parent="TopBar/MarginContainer2/RoundContainer"]
+layout_mode = 2
+text = "1/5"
+horizontal_alignment = 1
+
+[node name="MarginContainer3" type="MarginContainer" parent="TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_right = 100
+
+[node name="LevelContainer" type="VBoxContainer" parent="TopBar/MarginContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ue6oa")
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="LevelLabel" type="Label" parent="TopBar/MarginContainer3/LevelContainer"]
+layout_mode = 2
+text = "Level"
+horizontal_alignment = 1
+
+[node name="LevelValue" type="Label" parent="TopBar/MarginContainer3/LevelContainer"]
+layout_mode = 2
+text = "1"
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -141.0
+offset_bottom = 48.0
+grow_horizontal = 0
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 40
+
+[node name="GoalContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="GoalLabel" type="Label" parent="MarginContainer/GoalContainer"]
+layout_mode = 2
+text = "Goal:"
+
+[node name="GoalValue" type="Label" parent="MarginContainer/GoalContainer"]
+layout_mode = 2
+text = "100"
+
+[node name="MarginContainer2" type="MarginContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -48.0
+offset_right = 128.0
+grow_vertical = 0
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_bottom = 50
+
+[node name="MoneyContainer" type="HBoxContainer" parent="MarginContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="MoneyLabel" type="Label" parent="MarginContainer2/MoneyContainer"]
+layout_mode = 2
+text = "$$$$$: "
+
+[node name="MoneyValue" type="Label" parent="MarginContainer2/MoneyContainer"]
+layout_mode = 2
+text = "0"
