@@ -9,9 +9,9 @@
 [node name="Node3D" type="Node3D"]
 script = ExtResource("2_7bkgr")
 
-[node name="RoundTransition" parent="." instance=ExtResource("2_fjolp")]
-
 [node name="GameUI" parent="." instance=ExtResource("2_1exf1")]
+
+[node name="RoundTransition" parent="." instance=ExtResource("2_fjolp")]
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-3.28695e-08, 0.659201, -0.751966, 2.88146e-08, 0.751966, 0.659201, 1, 8.88178e-15, -4.37114e-08, -0.552615, 0.361187, 0)

@@ -21,15 +21,24 @@ var active_artifacts = []
 @onready var round_transition = $RoundTransition
 
 func _ready():
+	print("GameManager ready, UI reference: ", game_ui)
 	# Connect signals from alligator
 	alligator.tooth_pressed.connect(_on_tooth_pressed)
 	alligator.tooth_bit.connect(_on_tooth_bit)
-	round_transition.continue_pressed.connect(_on_continue_to_shop)
+	 # Connect transition signal if it exists
+	if round_transition:
+		if not round_transition.is_connected("continue_pressed", _on_continue_to_shop):
+			round_transition.continue_pressed.connect(_on_continue_to_shop)
+	else:
+		push_error("Round transition reference is missing!")
 	# Start the first level
 	start_level(current_level)
+	update_ui()
 
 func start_level(level):
 	print("Starting level ", level)
+	
+	# Reset score only at the beginning of a new level
 	score = 0
 	current_round = 1
 	level_target_score = 100 * level
@@ -39,15 +48,14 @@ func start_level(level):
 	
 	# Start the first round
 	start_new_round()
-	
-	# Update UI
-	update_ui()
 
 func start_new_round():
 	print("Starting round ", current_round, " of level ", current_level)
+	
+	# Only reset the round_score (not the total score)
 	round_score = 0
 	
-	# Reset the alligator (this now includes closing then opening the mouth)
+	# Reset the alligator
 	alligator.reset_teeth()
 	
 	# Generate teeth values based on level difficulty
@@ -56,38 +64,59 @@ func start_new_round():
 	# Assign multipliers to some teeth
 	assign_teeth_multipliers()
 	
-	# Wait for mouth to open before updating visuals
-	await get_tree().create_timer(1.0).timeout
-	
 	# Update tooth visuals
 	alligator.update_tooth_visuals(teeth_values, teeth_multipliers)
 	
-	# Update UI
+	# Update UI - this will show the reset round_score
 	update_ui()
+
 
 func _on_tooth_pressed(tooth_name):
 	# Calculate score for this tooth
-	var tooth_value = teeth_values.get(tooth_name, 10)  # Default to 10 if not found
+	var tooth_value = teeth_values.get(tooth_name, 10)
 	var multiplier = teeth_multipliers.get(tooth_name, 1.0)
 	var tooth_score = tooth_value * multiplier
 	
 	print("Tooth ", tooth_name, " pressed! Value: ", tooth_value, " x", multiplier)
 	
-	# Get the tooth's position for the popup
-	var tooth_position = alligator.get_node(tooth_name).global_position
+	# Previous round score
+	var prev_round_score = round_score
 	
-	# Convert 3D position to 2D screen position
-	var camera = get_viewport().get_camera_3d()
-	var screen_position = camera.unproject_position(tooth_position)
-	
-	# Show score popup
-	game_ui.show_score_popup(tooth_score, screen_position, multiplier > 1)
+	# Get the tooth node and its collision shape
+	var tooth_node = alligator.get_node(tooth_name)
+	if tooth_node:
+		# Try to get the collision shape position
+		var collision_shape = tooth_node.get_node_or_null("CollisionShape3D")
+		var position_3d
+		
+		if collision_shape:
+			position_3d = collision_shape.global_position
+		else:
+			position_3d = tooth_node.global_position
+		
+		# Convert 3D position to 2D screen position
+		var camera = get_viewport().get_camera_3d()
+		
+		# Make sure we have a valid camera
+		if camera:
+			var screen_position = camera.unproject_position(position_3d)
+			
+			# Show the score popup at the converted screen position
+			game_ui.show_score_popup(tooth_score, screen_position, multiplier > 1)
+		else:
+			# Fallback if camera can't be found
+			game_ui.show_score_popup(tooth_score, Vector2(get_viewport().size / 2), multiplier > 1)
+	else:
+		# Fallback if tooth node can't be found
+		game_ui.show_score_popup(tooth_score, Vector2(get_viewport().size / 2), multiplier > 1)
 	
 	# Apply artifact effects
 	tooth_score = apply_artifact_effects(tooth_score, alligator.pressed_teeth.size())
 	
 	# Add to round score
 	round_score += tooth_score
+	
+	print("Round score: ", prev_round_score, " + ", tooth_score, " = ", round_score)
 	
 	# Update UI
 	update_ui()
@@ -103,21 +132,39 @@ func _on_tooth_bit():
 	var penalty = round(round_score * 0.05)
 	round_score -= penalty
 	
-	# End the round
-	end_round()
+	# End the round with bite flag
+	end_round(true)
 
-func end_round():
+# Update the end_round function in GameManager.gd
+func end_round(bite_triggered = false):
 	# Add round score to total score
 	score += round_score
 	
+	# Award money based on round performance
 	var money_earned = round_score / 10  # Simple conversion
 	money += money_earned
 	
 	print("Round ended. Round score: ", round_score, " Total score: ", score)
+	print("Money earned: ", money_earned, " Total money: ", money)
 	
+	# Store the result values for the transition screen
+	var final_round_score = round_score
+	
+	# Update UI with the total score
+	update_ui()
+	
+	# Show the round transition with more complete information
+	if round_transition:
+		round_transition.show_results(final_round_score, money_earned, score, level_target_score)
+	else:
+		push_error("Round transition reference is null! Check the path.")
+		# Fallback to automatic progression
+		_proceed_to_next_round()
+
+func _proceed_to_next_round():
 	# Check if we've reached the target score
 	if score >= level_target_score:
-		print("Level ", current_level, " completed!")
+		print("Level ", current_level, " completed! Target: ", level_target_score, " Actual: ", score)
 		# Move to next level
 		current_level += 1
 		start_level(current_level)
@@ -130,7 +177,7 @@ func end_round():
 		else:
 			# Move to next round
 			current_round += 1
-			round_transition.show_results(round_score, money_earned)
+			start_new_round()
 
 func generate_teeth_values(level):
 	teeth_values = {}
@@ -228,27 +275,18 @@ func display_artifacts():
 		print("- ", artifact.name, ": ", artifact.description)
 
 func update_ui():
+	print("Updating UI - Round Score: ", round_score, " Total Score: ", score)
+	
 	if game_ui:
-		game_ui.update_score(score)
+		# Show both the round score and total score
+		game_ui.update_score(round_score)
+		game_ui.update_total_score(score, level_target_score)
 		game_ui.update_round(current_round, 5)
 		game_ui.update_level(current_level)
 		game_ui.update_goal(level_target_score)
 		game_ui.update_money(money)
+	else:
+		push_error("Game UI reference is null! Check the path.")
 
 func _on_continue_to_shop():
-	# Check if we've reached the target score
-	if score >= level_target_score:
-		print("Level ", current_level, " completed!")
-		# Move to next level
-		current_level += 1
-		start_level(current_level)
-	else:
-		# Check if this was the last round
-		if current_round >= 5:
-			print("Game over! Final score: ", score)
-			# Handle game over
-			# You can implement a restart button or other game over logic
-		else:
-			# Move to next round
-			current_round += 1
-			start_new_round()
+	_proceed_to_next_round()

@@ -6,6 +6,7 @@ extends CanvasLayer
 @onready var level_value = $TopBar/MarginContainer3/LevelContainer/LevelValue
 @onready var goal_value = $MarginContainer/GoalContainer/GoalValue
 @onready var money_value = $MarginContainer2/MoneyContainer/MoneyValue
+@onready var total_score_value = $MarginContainer3/TotalScore/TotalScoreValue
 
 # Initialize UI
 func _ready():
@@ -16,8 +17,11 @@ func _ready():
 	update_money(0)
 
 # Update functions
-func update_score(value):
-	score_value.text = str(value)
+func update_score(round_score):
+	score_value.text = str(round_score)
+
+func update_total_score(total_score, target_score):
+	total_score_value.text = str(total_score) + " / " + str(target_score)
 
 func update_round(current, total):
 	round_value.text = str(current) + "/" + str(total)

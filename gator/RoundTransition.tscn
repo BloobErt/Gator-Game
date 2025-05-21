@@ -1,8 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://dybwitfeuo8bc"]
+[gd_scene load_steps=6 format=3 uid="uid://dybwitfeuo8bc"]
 
 [ext_resource type="Script" uid="uid://kvobtothru3u" path="res://Scripts/round_transition.gd" id="1_jgv2l"]
 [ext_resource type="LabelSettings" uid="uid://cv30q41x772qb" path="res://Assets/RoundTransition.tres" id="1_suuut"]
 [ext_resource type="Theme" uid="uid://cpwk5by5vj381" path="res://Theme.tres" id="3_nswyh"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_jgv2l"]
+font_size = 48
+font_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_nswyh"]
+font_size = 48
+font_color = Color(0, 0, 0, 1)
 
 [node name="RoundTransition" type="CanvasLayer"]
 script = ExtResource("1_jgv2l")
@@ -95,3 +103,29 @@ size_flags_vertical = 3
 theme = ExtResource("3_nswyh")
 text = "Continue       To       Shop"
 icon_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -40.0
+offset_top = -48.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 50
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="TotalScoreLabel" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "Total: "
+label_settings = SubResource("LabelSettings_jgv2l")
+
+[node name="TotalScoreValue" type="Label" parent="MarginContainer/HBoxContainer"]
+layout_mode = 2
+text = "0"
+label_settings = SubResource("LabelSettings_nswyh")

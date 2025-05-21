@@ -1,3 +1,4 @@
+# Create ScorePopup.gd as a separate script file
 class_name ScorePopup
 extends Node2D
 

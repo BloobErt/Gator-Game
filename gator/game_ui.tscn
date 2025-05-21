@@ -128,3 +128,28 @@ text = "$$$$$: "
 [node name="MoneyValue" type="Label" parent="MarginContainer2/MoneyContainer"]
 layout_mode = 2
 text = "0"
+
+[node name="MarginContainer3" type="MarginContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -212.0
+offset_top = -98.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 50
+
+[node name="TotalScore" type="HBoxContainer" parent="MarginContainer3"]
+layout_mode = 2
+alignment = 1
+
+[node name="TotalScoreLabel" type="Label" parent="MarginContainer3/TotalScore"]
+layout_mode = 2
+text = "Total:"
+
+[node name="TotalScoreValue" type="Label" parent="MarginContainer3/TotalScore"]
+layout_mode = 2
+text = "0"
