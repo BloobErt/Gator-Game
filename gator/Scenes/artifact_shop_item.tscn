@@ -1,0 +1,67 @@
+[gd_scene load_steps=2 format=3 uid="uid://bojs75ufi7qte"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4kbrs"]
+bg_color = Color(0.705882, 0.588235, 0.784314, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.313726, 0.196078, 0.392157, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="ArtifactShopItem" type="Control"]
+custom_minimum_size = Vector2(215, 236)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_4kbrs")
+
+[node name="Icon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 210.0
+offset_bottom = 130.0
+expand_mode = 3
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = 10.0
+offset_top = 140.0
+offset_right = 210.0
+offset_bottom = 172.0
+theme_override_font_sizes/font_size = 32
+text = "Artifact      Name"
+horizontal_alignment = 1
+
+[node name="CostLabel" type="Label" parent="."]
+offset_left = 10.0
+offset_top = 175.0
+offset_right = 210.0
+offset_bottom = 207.0
+theme_override_colors/font_color = Color(1, 0.87451, 0.00784314, 1)
+theme_override_font_sizes/font_size = 32
+text = "50   $$$$"
+horizontal_alignment = 1
+
+[node name="DescriptionLabel" type="Label" parent="."]
+offset_left = 5.0
+offset_top = 210.0
+offset_right = 215.0
+offset_bottom = 226.0
+theme_override_font_sizes/font_size = 16
+text = "description       hEre"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3

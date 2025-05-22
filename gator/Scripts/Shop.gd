@@ -15,7 +15,7 @@ var teeth_tattoos: Dictionary = {}
 							 $ShopContainer/TattooSection/TattooContainer/TattooSlot5]
 @onready var teeth_grid = $ShopContainer/TeethSection/TeethGrid
 @onready var exit_button = $ShopContainer/ExitButton
-@onready var clear_tooth_button = $ShopContainer/UtilitySection/ClearToothButton
+@onready var clear_tooth_button = $ShopContainer/ClearToothButton
 
 func _ready():
 	exit_button.pressed.connect(_on_exit_pressed)
@@ -62,7 +62,7 @@ func setup_teeth_grid():
 					  "Diag_Left", "Diag_Right", "Extra_1", "Extra_2"]
 	
 	for tooth_name in tooth_names:
-		var tooth_slot = preload("res://Scenes/ToothSlot.tscn").instantiate()
+		var tooth_slot = preload("res://Scenes/tooth_slot.tscn").instantiate()
 		tooth_slot.setup_tooth(tooth_name)
 		tooth_slot.tattoo_applied.connect(_on_tattoo_applied)
 		teeth_grid.add_child(tooth_slot)

@@ -6,13 +6,11 @@ var max_tattoos = 3
 
 @onready var tooth_icon = $ToothIcon
 @onready var tattoo_container = $TattooContainer
-@onready var tooth_label = $ToothLabel
 
 signal tattoo_applied(tooth_name, tattoo_data)
 
 func setup_tooth(name: String):
 	tooth_name = name
-	tooth_label.text = name
 
 func _can_drop_data(position, data):
 	# Can accept tattoo drops if not at max capacity
