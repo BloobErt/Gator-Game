@@ -11,6 +11,7 @@ var money = 0
 # Teeth values
 var teeth_values = {}
 var teeth_multipliers = {}
+var current_tooth_tattoos = {}
 
 # Artifacts (special bonuses)
 var active_artifacts = []
@@ -19,6 +20,7 @@ var active_artifacts = []
 @onready var alligator = $Alligator
 @onready var game_ui = $GameUI
 @onready var round_transition = $RoundTransition
+@onready var shop = $Shop
 
 func _ready():
 	print("GameManager ready, UI reference: ", game_ui)
@@ -34,6 +36,7 @@ func _ready():
 	# Start the first level
 	start_level(current_level)
 	update_ui()
+	shop.shop_closed.connect(_on_shop_closed)
 
 func start_level(level):
 	print("Starting level ", level)
@@ -75,6 +78,23 @@ func _on_tooth_pressed(tooth_name):
 	# Calculate score for this tooth
 	var tooth_value = teeth_values.get(tooth_name, 10)
 	var multiplier = teeth_multipliers.get(tooth_name, 1.0)
+	
+	# Apply tattoo effects if this tooth has tattoos
+	if current_tooth_tattoos.has(tooth_name):
+		var tattoos = current_tooth_tattoos[tooth_name]
+		for tattoo in tattoos:
+			if tattoo.id == "mult_2x" or tattoo.id == "mult_3x" or tattoo.id == "mult_4x":
+				multiplier *= tattoo.multiplier
+			elif tattoo.id == "bonus_10" or tattoo.id == "bonus_20":
+				var bonus = int(tattoo.id.split("_")[1])
+				tooth_value += bonus
+			elif tattoo.id == "lucky":
+				if randf() < 0.1:  # 10% chance
+					multiplier *= 5.0
+					print("Lucky tattoo triggered!")
+		
+		print("Tattoo effects applied to ", tooth_name, ": ", tattoos.size(), " tattoos")
+	
 	var tooth_score = tooth_value * multiplier
 	
 	print("Tooth ", tooth_name, " pressed! Value: ", tooth_value, " x", multiplier)
@@ -160,6 +180,17 @@ func end_round(bite_triggered = false):
 		push_error("Round transition reference is null! Check the path.")
 		# Fallback to automatic progression
 		_proceed_to_next_round()
+
+func _on_shop_closed(teeth_tattoo_mapping):
+	# Store the new tattoo mapping
+	current_tooth_tattoos = teeth_tattoo_mapping
+	
+	print("Shop closed. Tattoo mapping received:")
+	for tooth_name in current_tooth_tattoos.keys():
+		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos")
+	
+	# Continue to next round
+	_proceed_to_next_round()
 
 func _proceed_to_next_round():
 	# Check if we've reached the target score

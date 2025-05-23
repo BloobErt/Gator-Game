@@ -1,11 +1,12 @@
 extends CanvasLayer
 
-signal shop_closed(teeth_tattoos)
+signal shop_closed(teeth_tattoo_mapping)
 
 var available_tattoos: Array[TattooData] = []
 var available_artifacts: Array[ArtifactData] = []
 var player_money: int = 0
-var teeth_tattoos: Dictionary = {}
+var teeth_slots: Array = []  # Array of ToothSlot nodes
+var purchased_artifacts: Array[ArtifactData] = []
 
 @onready var money_label = $ShopContainer/MoneyDisplay/MoneyLabel
 @onready var tattoo_slots = [$ShopContainer/TattooSection/TattooContainer/TattooSlot1,
@@ -13,15 +14,19 @@ var teeth_tattoos: Dictionary = {}
 							 $ShopContainer/TattooSection/TattooContainer/TattooSlot3,
 							 $ShopContainer/TattooSection/TattooContainer/TattooSlot4,
 							 $ShopContainer/TattooSection/TattooContainer/TattooSlot5]
+@onready var artifact_slots = [$ShopContainer/ArtifactSection/ArtifactContainer/ArtifactSlot1,
+							   $ShopContainer/ArtifactSection/ArtifactContainer/ArtifactSlot2,
+							   $ShopContainer/ArtifactSection/ArtifactContainer/ArtifactSlot3]
 @onready var teeth_grid = $ShopContainer/TeethSection/TeethGrid
 @onready var exit_button = $ShopContainer/ExitButton
-@onready var clear_tooth_button = $ShopContainer/ClearToothButton
+@onready var clear_tooth_button = $ShopContainer/UtilitySection/ClearToothButton
 
 func _ready():
 	exit_button.pressed.connect(_on_exit_pressed)
 	clear_tooth_button.pressed.connect(_on_clear_tooth_pressed)
 	
 	generate_tattoo_pool()
+	generate_artifact_pool()
 	setup_teeth_grid()
 
 func open_shop(money: int):
@@ -38,9 +43,21 @@ func generate_tattoo_pool():
 		TattooData.new("bonus_10", "+10 Bonus", "Adds 10 to tooth value", 30, 1.0),
 		TattooData.new("bonus_20", "+20 Bonus", "Adds 20 to tooth value", 60, 1.0),
 		TattooData.new("lucky", "Lucky Tooth", "Small chance for 5x value", 80, 1.0),
+		TattooData.new("safe", "Safe Bet", "Never the bite tooth", 150, 1.0),
+		TattooData.new("mult_4x", "4x Multiplier", "Quadruples tooth value", 200, 4.0),
 	]
 	
 	available_tattoos = tattoo_pool
+
+func generate_artifact_pool():
+	# Create artifacts (these are purchased directly, not dragged)
+	var artifact_pool = [
+		ArtifactData.new("steady_hand", "Steady Hand", "After 3 teeth, 1.2x multiplier", 150),
+		ArtifactData.new("risk_taker", "Risk Taker", "After 5 teeth, 1.5x multiplier", 200),
+		ArtifactData.new("early_bird", "Early Bird", "First tooth has 2x value", 120),
+		ArtifactData.new("lucky_streak", "Lucky Streak", "Chain bonus for consecutive teeth", 180),
+		ArtifactData.new("safety_net", "Safety Net", "Reduced bite penalty", 100),
+	]
 
 func generate_shop_items():
 	# Randomly select 5 tattoos for the shop
@@ -51,50 +68,66 @@ func generate_shop_items():
 		if i < shuffled_tattoos.size():
 			tattoo_slots[i].setup_tattoo(shuffled_tattoos[i])
 			tattoo_slots[i].tattoo_dragged.connect(_on_tattoo_dragged)
+	
+	# Generate artifacts (implement artifact setup when you create ArtifactShopItem script)
 
 func setup_teeth_grid():
-	# Create 16 tooth slots (4x4 grid)
+	# Create 16 tooth slots (representing potential teeth combinations)
 	teeth_grid.columns = 4
 	
-	var tooth_names = ["Front_Left", "Front_MidLeft", "Front_MidRight", "Front_Right",
-					  "Side_L1", "Side_L2", "Side_L3", "Side_L4",
-					  "Side_R1", "Side_R2", "Side_R3", "Side_R4", 
-					  "Diag_Left", "Diag_Right", "Extra_1", "Extra_2"]
-	
-	for tooth_name in tooth_names:
+	for i in range(16):  # 16 slots, each can become any random tooth
 		var tooth_slot = preload("res://Scenes/tooth_slot.tscn").instantiate()
-		tooth_slot.setup_tooth(tooth_name)
-		tooth_slot.tattoo_applied.connect(_on_tattoo_applied)
+		tooth_slot.setup_slot(i)
+		tooth_slot.tattoo_applied.connect(_on_tattoo_applied_to_slot)
 		teeth_grid.add_child(tooth_slot)
+		teeth_slots.append(tooth_slot)
 
-func _on_tattoo_dragged(tattoo_data: TattooData, source_control):
-	# Handle tattoo being dragged (visual feedback, etc.)
-	pass
-
-func _on_tattoo_applied(tooth_name: String, tattoo_data: TattooData):
+func _on_tattoo_applied_to_slot(slot_index: int, tattoo_data: TattooData):
 	if player_money >= tattoo_data.cost:
 		# Deduct money
 		player_money -= tattoo_data.cost
 		update_money_display()
 		
-		# Store the tattoo application
-		if not teeth_tattoos.has(tooth_name):
-			teeth_tattoos[tooth_name] = []
-		teeth_tattoos[tooth_name].append(tattoo_data)
-		
-		print("Applied ", tattoo_data.name, " to ", tooth_name)
+		print("Applied ", tattoo_data.name, " to slot ", slot_index)
 	else:
 		print("Not enough money!")
-		# Remove the tattoo from the tooth since purchase failed
-		# You'll need to implement this rollback
+		# Remove the tattoo from the slot since purchase failed
+		teeth_slots[slot_index].applied_tattoos.pop_back()
+		teeth_slots[slot_index].tattoo_container.get_child(-1).queue_free()
+
+func create_random_tooth_mapping():
+	# Create mapping from shop slots to actual game teeth
+	var game_tooth_names = ["Left", "MidLeft", "MidRight", "Right", 
+						   "LeftD", "RightD",
+						   "L1", "L2", "L3", "L4", "L5",
+						   "R1", "R2", "R3", "R4", "R5"]
+	
+	var tooth_mapping = {}
+	
+	for i in range(teeth_slots.size()):
+		var slot = teeth_slots[i]
+		if slot.applied_tattoos.size() > 0:
+			# Randomly assign this slot's tattoos to a game tooth
+			var random_tooth = game_tooth_names[randi() % game_tooth_names.size()]
+			tooth_mapping[random_tooth] = slot.applied_tattoos.duplicate()
+			
+			print("Slot ", i, " with ", slot.applied_tattoos.size(), " tattoos assigned to tooth: ", random_tooth)
+	
+	return tooth_mapping
 
 func update_money_display():
 	money_label.text = "Money: " + str(player_money)
 
 func _on_clear_tooth_pressed():
-	# Implement clear tooth functionality
-	print("Clear tooth feature - to be implemented")
+	# Allow player to clear a slot for money
+	print("Clear tooth feature - select a slot to clear")
+	# You could implement a selection mode here
 
 func _on_exit_pressed():
 	visible = false
-	emit_signal("shop_closed", teeth_tattoos)
+	var final_mapping = create_random_tooth_mapping()
+	emit_signal("shop_closed", final_mapping)
+
+func _on_tattoo_dragged(tattoo_data: TattooData, source_control):
+	# Visual feedback for dragging
+	pass

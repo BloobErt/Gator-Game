@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://b8a1vsh2qydig"]
+[gd_scene load_steps=7 format=3 uid="uid://b8a1vsh2qydig"]
 
 [ext_resource type="Script" uid="uid://dflsbiautig3x" path="res://Scripts/GameManager.gd" id="1_v0ff7"]
+[ext_resource type="PackedScene" uid="uid://c1xc2vs4locvu" path="res://Scenes/shop.tscn" id="2_6ohho"]
 [ext_resource type="PackedScene" uid="uid://qiletc3vogi" path="res://Scenes/game_ui.tscn" id="2_vc6s6"]
 [ext_resource type="PackedScene" uid="uid://dybwitfeuo8bc" path="res://Scenes/RoundTransition.tscn" id="3_6ohho"]
 [ext_resource type="Script" uid="uid://blpl7rdu1exwl" path="res://Scripts/TeethClickDetector.gd" id="4_0i5w4"]
@@ -8,6 +9,8 @@
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_v0ff7")
+
+[node name="Shop" parent="." instance=ExtResource("2_6ohho")]
 
 [node name="GameUI" parent="." instance=ExtResource("2_vc6s6")]
 
