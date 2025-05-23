@@ -10,11 +10,12 @@
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_v0ff7")
 
-[node name="Shop" parent="." instance=ExtResource("2_6ohho")]
-
 [node name="GameUI" parent="." instance=ExtResource("2_vc6s6")]
 
 [node name="RoundTransition" parent="." instance=ExtResource("3_6ohho")]
+
+[node name="Shop" parent="." instance=ExtResource("2_6ohho")]
+visible = false
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-3.28695e-08, 0.659201, -0.751966, 2.88146e-08, 0.751966, 0.659201, 1, 8.88178e-15, -4.37114e-08, -0.552615, 0.361187, 0)

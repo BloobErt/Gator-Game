@@ -18,8 +18,8 @@ var purchased_artifacts: Array[ArtifactData] = []
 							   $ShopContainer/ArtifactSection/ArtifactContainer/ArtifactSlot2,
 							   $ShopContainer/ArtifactSection/ArtifactContainer/ArtifactSlot3]
 @onready var teeth_grid = $ShopContainer/TeethSection/TeethGrid
-@onready var exit_button = $ShopContainer/ExitButton
-@onready var clear_tooth_button = $ShopContainer/UtilitySection/ClearToothButton
+@onready var exit_button = $ExitButton
+@onready var clear_tooth_button = $ShopContainer/ArtifactSection/ArtifactContainer/ClearToothButton
 
 func _ready():
 	exit_button.pressed.connect(_on_exit_pressed)
@@ -47,7 +47,7 @@ func generate_tattoo_pool():
 		TattooData.new("mult_4x", "4x Multiplier", "Quadruples tooth value", 200, 4.0),
 	]
 	
-	available_tattoos = tattoo_pool
+	available_tattoos.assign(tattoo_pool)
 
 func generate_artifact_pool():
 	# Create artifacts (these are purchased directly, not dragged)
@@ -58,10 +58,13 @@ func generate_artifact_pool():
 		ArtifactData.new("lucky_streak", "Lucky Streak", "Chain bonus for consecutive teeth", 180),
 		ArtifactData.new("safety_net", "Safety Net", "Reduced bite penalty", 100),
 	]
+	
+	available_artifacts.assign(artifact_pool)
 
 func generate_shop_items():
 	# Randomly select 5 tattoos for the shop
-	var shuffled_tattoos = available_tattoos.duplicate()
+	var shuffled_tattoos: Array[TattooData] = []
+	shuffled_tattoos.assign(available_tattoos)
 	shuffled_tattoos.shuffle()
 	
 	for i in range(min(5, tattoo_slots.size())):
@@ -77,9 +80,11 @@ func setup_teeth_grid():
 	
 	for i in range(16):  # 16 slots, each can become any random tooth
 		var tooth_slot = preload("res://Scenes/tooth_slot.tscn").instantiate()
+		teeth_grid.add_child(tooth_slot)  # Add to scene first
+		
+		# Setup after adding to scene
 		tooth_slot.setup_slot(i)
 		tooth_slot.tattoo_applied.connect(_on_tattoo_applied_to_slot)
-		teeth_grid.add_child(tooth_slot)
 		teeth_slots.append(tooth_slot)
 
 func _on_tattoo_applied_to_slot(slot_index: int, tattoo_data: TattooData):

@@ -36,7 +36,10 @@ func _ready():
 	# Start the first level
 	start_level(current_level)
 	update_ui()
-	shop.shop_closed.connect(_on_shop_closed)
+	if shop:
+		shop.shop_closed.connect(_on_shop_closed)
+	else:
+		push_error("Shop reference is null! Add the Shop scene to your main scene.")
 
 func start_level(level):
 	print("Starting level ", level)
@@ -178,19 +181,11 @@ func end_round(bite_triggered = false):
 		round_transition.show_results(final_round_score, money_earned, score, level_target_score)
 	else:
 		push_error("Round transition reference is null! Check the path.")
-		# Fallback to automatic progression
-		_proceed_to_next_round()
-
-func _on_shop_closed(teeth_tattoo_mapping):
-	# Store the new tattoo mapping
-	current_tooth_tattoos = teeth_tattoo_mapping
-	
-	print("Shop closed. Tattoo mapping received:")
-	for tooth_name in current_tooth_tattoos.keys():
-		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos")
-	
-	# Continue to next round
-	_proceed_to_next_round()
+		# Fallback - open shop directly
+		if shop:
+			shop.open_shop(money)
+		else:
+			_proceed_to_next_round()
 
 func _proceed_to_next_round():
 	# Check if we've reached the target score
@@ -320,4 +315,20 @@ func update_ui():
 		push_error("Game UI reference is null! Check the path.")
 
 func _on_continue_to_shop():
+	# Instead of immediately proceeding, open the shop first
+	if shop:
+		shop.open_shop(money)
+	else:
+		# Fallback if shop isn't available
+		_proceed_to_next_round()
+
+func _on_shop_closed(teeth_tattoo_mapping):
+	# Store the new tattoo mapping
+	current_tooth_tattoos = teeth_tattoo_mapping
+	
+	print("Shop closed. Tattoo mapping received:")
+	for tooth_name in current_tooth_tattoos.keys():
+		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos")
+	
+	# Now proceed to next round after shop is closed
 	_proceed_to_next_round()

@@ -13,8 +13,21 @@ var slot_index: int
 
 func setup_slot(index: int):
 	slot_index = index
-	tooth_label.text = "Slot " + str(index + 1)  # Just show slot number, not tooth name
+	
+	# Add null check and defer if needed
+	if tooth_label:
+		tooth_label.text = "Slot " + str(index + 1)
+	else:
+		# If the node isn't ready yet, defer the call
+		call_deferred("_update_label", index)
 
+func _update_label(index: int):
+	if tooth_label:
+		tooth_label.text = "Slot " + str(index + 1)
+	else:
+		push_error("ToothLabel node not found! Check the node structure.")
+
+# Rest of the script remains the same...
 func _can_drop_data(position, data):
 	# Can accept tattoo drops if not at max capacity
 	return data.has("type") and data.type == "tattoo" and applied_tattoos.size() < max_tattoos
@@ -54,7 +67,9 @@ func update_display():
 	
 	# Optional: change border color based on tattoo count
 	if applied_tattoos.size() > 0:
-		$Background.add_theme_stylebox_override("panel", create_colored_style())
+		var background = get_node_or_null("Background")
+		if background:
+			background.add_theme_stylebox_override("panel", create_colored_style())
 
 func create_colored_style():
 	var style = StyleBoxFlat.new()
