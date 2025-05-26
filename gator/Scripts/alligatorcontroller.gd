@@ -19,24 +19,6 @@ signal tooth_pressed(tooth_name)
 signal tooth_bit
 
 func _ready():
-	# Verify we found the skeleton
-	if skeleton:
-		print("Found skeleton with ", skeleton.get_bone_count(), " bones")
-		# Print all bones to help with debugging
-		for i in range(skeleton.get_bone_count()):
-			print("Bone ", i, ": ", skeleton.get_bone_name(i))
-	else:
-		push_error("Skeleton not found! Check the path: $Body/Skeleton3D")
-	# Debug collision shapes
-	print("Checking tooth collision shapes:")
-	for child in get_children():
-		if child is Area3D and "Tooth" in child.name:
-			var collision_shape = child.get_node_or_null("CollisionShape3D")
-			if collision_shape:
-				print("Tooth ", child.name, " has collision shape")
-			else:
-				print("Tooth ", child.name, " is MISSING collision shape!")
-	
 	# Set up the tooth-to-bone mapping
 	_setup_tooth_bone_mapping()
 	
@@ -95,31 +77,19 @@ func _store_original_tooth_positions():
 			# Store the original Y position
 			var pose = skeleton.get_bone_pose(bone_idx)
 			original_tooth_positions[bone_name] = pose.origin.y
-	
-	print("Stored original tooth positions")
 
 # Select a random bite tooth
 func _select_random_bite_tooth():
 	var tooth_areas = []
 	
-	# Print all children of the Alligator node
-	print("Children of Alligator node:")
 	for child in get_children():
-		print("- Child: ", child.name, " (", child.get_class(), ")")
-		
 		# Check if it's an Area3D with "Tooth" in the name
 		if child is Area3D and "Tooth" in child.name:
 			tooth_areas.append(child)
-			print("  --> Added as tooth area")
-	
-	print("Found ", tooth_areas.size(), " tooth areas")
 	
 	if tooth_areas.size() > 0:
 		var random_index = randi() % tooth_areas.size()
 		bite_tooth_index = tooth_areas[random_index].name
-		print("Selected bite tooth: ", bite_tooth_index)
-	else:
-		print("No tooth areas found!")
 
 # Update press_tooth to pass the Area3D node rather than just the name
 func press_tooth(tooth_name):
@@ -150,7 +120,6 @@ func press_tooth(tooth_name):
 	
 	# Check if it's the bite tooth
 	if node_name == bite_tooth_index:
-		print("CHOMP! That was the bite tooth!")
 		_trigger_bite_animation()
 		emit_signal("tooth_bit")
 		return true
@@ -161,7 +130,6 @@ func press_tooth(tooth_name):
 # Animate a tooth bone with a smooth tween and simultaneous particles
 func _animate_tooth_bone(bone_name, is_multiplier = false, tooth_node = null):
 	if not skeleton:
-		print("No skeleton to animate!")
 		return
 	
 	# Find the bone index
@@ -222,8 +190,6 @@ func _animate_tooth_bone(bone_name, is_multiplier = false, tooth_node = null):
 		
 		# Clean up the dummy object when done
 		tween.tween_callback(func(): dummy_object.queue_free()).set_delay(0.5)
-	else:
-		print("Could not find bone: ", bone_name)
 
 # Updated particle emission function
 @warning_ignore("shadowed_variable_base_class")
@@ -259,26 +225,16 @@ func _emit_tooth_particles(position, is_multiplier = false):
 			await get_tree().create_timer(particles.lifetime + 0.5).timeout
 			if is_instance_valid(particles):
 				particles.queue_free()
-		else:
-			print("Particle instance is not a GPUParticles3D node!")
-	else:
-		print("Particle scene not found at path: ", particle_path)
-		print("Make sure to create your particle effects at the proper locations.")
 
 # Trigger the bite animation
 func _trigger_bite_animation():
-	print("Bite animation triggered!")
 	
 	# Check if we have an animation player
 	if animation_player:
 		# Check if the bite animation exists
 		if animation_player.has_animation("Chomp"):
 			animation_player.play("Chomp")
-		else:
-			print("No bite animation found. Create one in the AnimationPlayer.")
 		mouth_open = false
-	else:
-		print("No AnimationPlayer found!")
 
 func open_mouth():
 	if mouth_open:
@@ -297,11 +253,8 @@ func open_mouth():
 	# Check if we have the open animation
 	if animation_player.has_animation("Open"):
 		animation_player.play("Open")
-	else:
-		print("No open animation found. Create one in the AnimationPlayer.")
 	
 	mouth_open = true
-	print("Opening mouth")
 
 # Add this function to close the mouth
 func close_mouth():
@@ -313,11 +266,8 @@ func close_mouth():
 		# Check if the close animation exists
 		if animation_player.has_animation("Close"):
 			animation_player.play("Close")
-		else:
-			print("No Close Animation Found.")
 	
 	mouth_open = false
-	print("Closing mouth")
 
 # Reset teeth for a new round
 func reset_teeth():
@@ -344,8 +294,6 @@ func reset_teeth():
 	if previous_bite_tooth and previous_bite_tooth in tooth_to_bone_map:
 		var bite_bone_name = tooth_to_bone_map[previous_bite_tooth]
 		_force_reset_tooth(bite_bone_name)
-	
-	print("Alligator reset, new bite tooth selected: ", bite_tooth_index)
 
 # reset tooth positions
 func _reset_tooth_positions():
@@ -392,10 +340,6 @@ func _force_reset_tooth(bone_name):
 		# Wait a frame and set again to ensure it's applied
 		await get_tree().process_frame
 		skeleton.set_bone_pose(bone_idx, pose)
-		
-		print("Force reset tooth bone: ", bone_name)
-	else:
-		print("Could not find bone to force reset: ", bone_name)
 
 # Add this function to handle animation completion
 func _on_animation_finished(anim_name):
@@ -429,8 +373,6 @@ func update_tooth_visuals(values, multipliers):
 			if multipliers.has(tooth_name) and multipliers[tooth_name] > 1:
 				# Maybe add a special glow or effect
 				pass
-	
-	print("Updated tooth visuals with ", values.size(), " values and ", multipliers.size(), " multipliers")
 
 # Add this function to clear visuals
 func clear_tooth_visuals():

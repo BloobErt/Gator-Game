@@ -21,11 +21,6 @@ func show_results(round_score, money_earned, total_score = 0, target_score = 0):
 	# Connect button if not already connected
 	if not $BoxContainer/ContinueButton.is_connected("pressed", _on_continue_button_pressed):
 		$BoxContainer/ContinueButton.pressed.connect(_on_continue_button_pressed)
-	
-	print("Showing round transition: Round score: ", round_score, 
-		  " Money earned: ", money_earned,
-		  " Total score: ", total_score,
-		  " Target: ", target_score)
 
 func _on_continue_button_pressed():
 	# Hide the screen
@@ -39,4 +34,3 @@ func _input(event):
 	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
 		if OS.is_debug_build():
 			visible = !visible
-			print("Transition visibility toggled: ", visible)

@@ -7,7 +7,6 @@ func _ready():
 	# Verify the controller was found
 	if not alligator_controller:
 		push_error("Could not find AlligatorController node!")
-		print("Could not find AlligatorController, check the path!")
 
 # Add to the camera script
 func _unhandled_input(event):

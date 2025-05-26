@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TattooData" load_steps=3 format=3 uid="uid://bvmufyyymii3g"]
+
+[ext_resource type="Texture2D" uid="uid://duu6y5mimf78o" path="res://Assets/Tattoos3.png" id="1_aa1vp"]
+[ext_resource type="Script" uid="uid://bdyc72pl2m0y8" path="res://Scripts/Resources/TattooData.gd" id="2_xt705"]
+
+[resource]
+script = ExtResource("2_xt705")
+id = "3"
+name = "Squiggler"
+description = "Yeah"
+cost = 10
+multiplier = 1.0
+special_effect = ""
+icon_texture = ExtResource("1_aa1vp")
+rarity = "common"
+metadata/_custom_type_script = "uid://bdyc72pl2m0y8"

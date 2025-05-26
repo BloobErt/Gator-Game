@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TattooData" load_steps=3 format=3 uid="uid://b2wqx3ngfu5yy"]
+
+[ext_resource type="Texture2D" uid="uid://cl61xgqxgylf5" path="res://Assets/Tattoos2.png" id="1_hxas4"]
+[ext_resource type="Script" uid="uid://bdyc72pl2m0y8" path="res://Scripts/Resources/TattooData.gd" id="2_w8p3a"]
+
+[resource]
+script = ExtResource("2_w8p3a")
+id = "2"
+name = "Scythe"
+description = "Le   Freaking    Scytheburger?"
+cost = 4
+multiplier = 1.0
+special_effect = ""
+icon_texture = ExtResource("1_hxas4")
+rarity = "common"
+metadata/_custom_type_script = "uid://bdyc72pl2m0y8"

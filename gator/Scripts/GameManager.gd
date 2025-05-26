@@ -23,7 +23,6 @@ var active_artifacts = []
 @onready var shop = $Shop
 
 func _ready():
-	print("GameManager ready, UI reference: ", game_ui)
 	# Connect signals from alligator
 	alligator.tooth_pressed.connect(_on_tooth_pressed)
 	alligator.tooth_bit.connect(_on_tooth_bit)
@@ -42,7 +41,6 @@ func _ready():
 		push_error("Shop reference is null! Add the Shop scene to your main scene.")
 
 func start_level(level):
-	print("Starting level ", level)
 	
 	# Reset score only at the beginning of a new level
 	score = 0
@@ -56,7 +54,6 @@ func start_level(level):
 	start_new_round()
 
 func start_new_round():
-	print("Starting round ", current_round, " of level ", current_level)
 	
 	# Only reset the round_score (not the total score)
 	round_score = 0
@@ -94,13 +91,10 @@ func _on_tooth_pressed(tooth_name):
 			elif tattoo.id == "lucky":
 				if randf() < 0.1:  # 10% chance
 					multiplier *= 5.0
-					print("Lucky tattoo triggered!")
 		
-		print("Tattoo effects applied to ", tooth_name, ": ", tattoos.size(), " tattoos")
 	
 	var tooth_score = tooth_value * multiplier
 	
-	print("Tooth ", tooth_name, " pressed! Value: ", tooth_value, " x", multiplier)
 	
 	# Previous round score
 	var prev_round_score = round_score
@@ -139,7 +133,6 @@ func _on_tooth_pressed(tooth_name):
 	# Add to round score
 	round_score += tooth_score
 	
-	print("Round score: ", prev_round_score, " + ", tooth_score, " = ", round_score)
 	
 	# Update UI
 	update_ui()
@@ -149,7 +142,6 @@ func is_multiplier_tooth(tooth_name):
 	return teeth_multipliers.has(tooth_name) and teeth_multipliers[tooth_name] > 1
 
 func _on_tooth_bit():
-	print("BITE! Round ended with penalty.")
 	
 	# Apply penalty - lose 5% of round score
 	var penalty = round(round_score * 0.05)
@@ -167,8 +159,6 @@ func end_round(bite_triggered = false):
 	var money_earned = round_score / 10  # Simple conversion
 	money += money_earned
 	
-	print("Round ended. Round score: ", round_score, " Total score: ", score)
-	print("Money earned: ", money_earned, " Total money: ", money)
 	
 	# Store the result values for the transition screen
 	var final_round_score = round_score
@@ -190,7 +180,6 @@ func end_round(bite_triggered = false):
 func _proceed_to_next_round():
 	# Check if we've reached the target score
 	if score >= level_target_score:
-		print("Level ", current_level, " completed! Target: ", level_target_score, " Actual: ", score)
 		# Move to next level
 		current_level += 1
 		start_level(current_level)
@@ -198,7 +187,6 @@ func _proceed_to_next_round():
 		# Check if this was the last round
 		if current_round >= 5:
 			print("Game over! Final score: ", score)
-			# Handle game over
 			# You can implement a restart button or other game over logic
 		else:
 			# Move to next round
@@ -220,8 +208,6 @@ func generate_teeth_values(level):
 	
 	for tooth in tooth_areas:
 		teeth_values[tooth] = randi() % (max_value - min_value + 1) + min_value
-	
-	print("Generated teeth values: ", teeth_values)
 
 func assign_teeth_multipliers():
 	teeth_multipliers = {}
@@ -244,8 +230,6 @@ func assign_teeth_multipliers():
 			var tooth = available_teeth[index]
 			teeth_multipliers[tooth] = 2.0  # 2x multiplier
 			available_teeth.remove_at(index)
-	
-	print("Assigned multipliers: ", teeth_multipliers)
 
 func generate_artifacts_for_level(level):
 	# This generates random artifacts based on level
@@ -280,7 +264,6 @@ func generate_artifacts_for_level(level):
 		artifacts.append(possible_artifacts[index])
 		possible_artifacts.remove_at(index)
 	
-	print("Generated artifacts: ", artifacts)
 	return artifacts
 
 func apply_artifact_effects(tooth_score, teeth_pressed):
@@ -289,7 +272,6 @@ func apply_artifact_effects(tooth_score, teeth_pressed):
 	for artifact in active_artifacts:
 		if artifact.has("threshold") and teeth_pressed == artifact.threshold:
 			modified_score *= artifact.get("multiplier", 1.0)
-			print("Applied artifact effect: ", artifact.name, " New score: ", modified_score)
 	
 	return modified_score
 
@@ -301,7 +283,6 @@ func display_artifacts():
 		print("- ", artifact.name, ": ", artifact.description)
 
 func update_ui():
-	print("Updating UI - Round Score: ", round_score, " Total Score: ", score)
 	
 	if game_ui:
 		# Show both the round score and total score
@@ -322,13 +303,20 @@ func _on_continue_to_shop():
 		# Fallback if shop isn't available
 		_proceed_to_next_round()
 
-func _on_shop_closed(teeth_tattoo_mapping):
+func _on_shop_closed(teeth_tattoo_mapping, artifacts_list):
 	# Store the new tattoo mapping
 	current_tooth_tattoos = teeth_tattoo_mapping
+	
+	# Store purchased artifacts
+	active_artifacts = artifacts_list
 	
 	print("Shop closed. Tattoo mapping received:")
 	for tooth_name in current_tooth_tattoos.keys():
 		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos")
 	
-	# Now proceed to next round after shop is closed
+	print("Active artifacts: ", active_artifacts.size())
+	for artifact in active_artifacts:
+		print("- ", artifact.name)
+	
+	# Continue to next round
 	_proceed_to_next_round()
