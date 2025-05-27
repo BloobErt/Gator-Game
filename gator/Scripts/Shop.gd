@@ -113,27 +113,35 @@ func create_drawer_walls():
 		print("Created kinematic wall: ", wall_data.name)
 
 func generate_tattoo_pool():
-	# Create different types of tattoos
-	var tattoo_pool = [
-		"res://Scripts/Resources/Tattoos/tattoo1.tres",
-		"res://Scripts/Resources/Tattoos/tattoo2.tres",
-		"res://Scripts/Resources/Tattoos/tattoo3.tres",
-		"res://Scripts/Resources/Tattoos/tattoo4.tres",
-		"res://Scripts/Resources/Tattoos/tattoo5.tres"
-	]
+	# Automatically load all TattooData resources from the folder
+	available_tattoos.clear()
 	
-	for path in tattoo_pool:
-		if ResourceLoader.exists(path):
-			var tattoo_data = load(path) as TattooData
-			if tattoo_data:
-				available_tattoos.append(tattoo_data)
-				print("Loaded tattoo: ", tattoo_data.name, " with texture: ", tattoo_data.icon_texture != null)
-			else:
-				print("Failed to load tattoo at: ", path)
-		else:
-			print("Tattoo resource not found: ", path)
+	var tattoo_folder = "res://Scripts/Resources/Tattoos/"
+	var dir = DirAccess.open(tattoo_folder)
 	
-	print("Total tattoos loaded: ", available_tattoos.size())
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		
+		while file_name != "":
+			# Only process .tres files
+			if file_name.ends_with(".tres"):
+				var full_path = tattoo_folder + file_name
+				print("Attempting to load: ", full_path)
+				
+				var tattoo_data = load(full_path) as TattooData
+				if tattoo_data:
+					available_tattoos.append(tattoo_data)
+					print("✅ Loaded tattoo: ", tattoo_data.name, " with texture: ", tattoo_data.icon_texture != null)
+				else:
+					print("❌ Failed to load tattoo at: ", full_path)
+			
+			file_name = dir.get_next()
+		
+		dir.list_dir_end()
+		print("Total tattoos loaded: ", available_tattoos.size())
+	else:
+		print("❌ Could not open tattoo directory: ", tattoo_folder)
 
 func generate_artifact_pool():
 	# Create artifacts (these are purchased directly, not dragged)

@@ -12,6 +12,9 @@ var money = 0
 var teeth_values = {}
 var teeth_multipliers = {}
 var current_tooth_tattoos = {}
+var disabled_teeth_next_round: Array = []
+var global_point_multiplier: float = 1.0
+var additional_bite_teeth: Array = []
 
 # Artifacts (special bonuses)
 var active_artifacts = []
@@ -53,7 +56,10 @@ func start_level(level):
 	# Start the first round
 	start_new_round()
 
+# Update start_new_round to handle persistent effects
 func start_new_round():
+	# Handle disabled teeth from previous round
+	disabled_teeth_next_round.clear()
 	
 	# Only reset the round_score (not the total score)
 	round_score = 0
@@ -70,62 +76,94 @@ func start_new_round():
 	# Update tooth visuals
 	alligator.update_tooth_visuals(teeth_values, teeth_multipliers)
 	
-	# Update UI - this will show the reset round_score
+	# Update UI
 	update_ui()
 
+func get_additional_bite_teeth() -> Array:
+	return additional_bite_teeth.duplicate()
+
+func get_teeth_with_safe_tattoos() -> Array:
+	var safe_teeth = []
+	
+	for tooth_name in current_tooth_tattoos.keys():
+		var tattoos = current_tooth_tattoos[tooth_name]
+		for tattoo in tattoos:
+			if tattoo.affects_bite_selection():
+				safe_teeth.append(tooth_name)
+				break
+	
+	return safe_teeth
 
 func _on_tooth_pressed(tooth_name):
-	# Calculate score for this tooth
-	var tooth_value = teeth_values.get(tooth_name, 10)
-	var multiplier = teeth_multipliers.get(tooth_name, 1.0)
+	# Check if tooth is disabled
+	if tooth_name in disabled_teeth_next_round:
+		print("Tooth ", tooth_name, " is disabled this round!")
+		return
+	
+	# Calculate base score for this tooth
+	var base_value = teeth_values.get(tooth_name, 10)
+	var base_multiplier = teeth_multipliers.get(tooth_name, 1.0)
+	
+	print("=== TOOTH PRESSED: ", tooth_name, " ===")
+	print("Base value: ", base_value)
+	print("Base multiplier: ", base_multiplier)
+	
+	# Create game state for tattoo effects
+	var game_state = {
+		"teeth_pressed_count": alligator.pressed_teeth.size() + 1, # +1 because this tooth isn't added to pressed_teeth yet
+		"current_round": current_round,
+		"is_bite_tooth": tooth_name == alligator.bite_tooth_index,
+		"round_score": round_score,
+		"total_score": score
+	}
+	
+	var final_value = base_value
+	var final_multiplier = base_multiplier
+	var all_special_effects = []
+	var all_persistent_effects = []
 	
 	# Apply tattoo effects if this tooth has tattoos
 	if current_tooth_tattoos.has(tooth_name):
 		var tattoos = current_tooth_tattoos[tooth_name]
+		print("Found ", tattoos.size(), " tattoos on this tooth")
+		
 		for tattoo in tattoos:
-			if tattoo.id == "mult_2x" or tattoo.id == "mult_3x" or tattoo.id == "mult_4x":
-				multiplier *= tattoo.multiplier
-			elif tattoo.id == "bonus_10" or tattoo.id == "bonus_20":
-				var bonus = int(tattoo.id.split("_")[1])
-				tooth_value += bonus
-			elif tattoo.id == "lucky":
-				if randf() < 0.1:  # 10% chance
-					multiplier *= 5.0
-		
-	
-	var tooth_score = tooth_value * multiplier
-	
-	
-	# Previous round score
-	var prev_round_score = round_score
-	
-	# Get the tooth node and its collision shape
-	var tooth_node = alligator.get_node(tooth_name)
-	if tooth_node:
-		# Try to get the collision shape position
-		var collision_shape = tooth_node.get_node_or_null("CollisionShape3D")
-		var position_3d
-		
-		if collision_shape:
-			position_3d = collision_shape.global_position
-		else:
-			position_3d = tooth_node.global_position
-		
-		# Convert 3D position to 2D screen position
-		var camera = get_viewport().get_camera_3d()
-		
-		# Make sure we have a valid camera
-		if camera:
-			var screen_position = camera.unproject_position(position_3d)
+			print("Applying tattoo: ", tattoo.name, " (Type: ", tattoo.effect_type, ")")
 			
-			# Show the score popup at the converted screen position
-			game_ui.show_score_popup(tooth_score, screen_position, multiplier > 1)
-		else:
-			# Fallback if camera can't be found
-			game_ui.show_score_popup(tooth_score, Vector2(get_viewport().size / 2), multiplier > 1)
-	else:
-		# Fallback if tooth node can't be found
-		game_ui.show_score_popup(tooth_score, Vector2(get_viewport().size / 2), multiplier > 1)
+			var effect_result = tattoo.apply_effect(tooth_name, final_value, final_multiplier, game_state)
+			
+			# Handle special case: high_value_no_growth overrides everything
+			if tattoo.effect_type == "high_value_no_growth":
+				final_value = effect_result.value
+				final_multiplier = 1.0 # No other multipliers apply
+				print("  High value no growth: Set to ", final_value, " (no other effects apply)")
+				break
+			else:
+				final_value = effect_result.value
+				final_multiplier = effect_result.multiplier
+			
+			# Collect special effects and persistent effects
+			all_special_effects.append_array(effect_result.special_effects)
+			all_persistent_effects.append_array(effect_result.persistent_effects)
+			
+			print("  Value: ", base_value, " -> ", final_value)
+			print("  Multiplier: ", base_multiplier, " -> ", final_multiplier)
+	
+	# Apply global point multiplier
+	var tooth_score = final_value * final_multiplier * global_point_multiplier
+	
+	print("Final calculation: ", final_value, " * ", final_multiplier, " * ", global_point_multiplier, " = ", tooth_score)
+	
+	# Show special effect messages
+	for effect_msg in all_special_effects:
+		print("🌟 SPECIAL EFFECT: ", effect_msg)
+	
+	# Handle persistent effects
+	for persistent_effect in all_persistent_effects:
+		apply_persistent_effect(persistent_effect)
+	
+	# Show score popup
+	show_score_popup_at_tooth(tooth_name, tooth_score, final_multiplier > base_multiplier)
 	
 	# Apply artifact effects
 	tooth_score = apply_artifact_effects(tooth_score, alligator.pressed_teeth.size())
@@ -133,22 +171,78 @@ func _on_tooth_pressed(tooth_name):
 	# Add to round score
 	round_score += tooth_score
 	
-	
 	# Update UI
 	update_ui()
+
+func show_score_popup_at_tooth(tooth_name: String, score: float, has_multiplier: bool):
+	var tooth_node = alligator.get_node(tooth_name)
+	if tooth_node:
+		var collision_shape = tooth_node.get_node_or_null("CollisionShape3D")
+		var position_3d = collision_shape.global_position if collision_shape else tooth_node.global_position
+		
+		var camera = get_viewport().get_camera_3d()
+		if camera:
+			var screen_position = camera.unproject_position(position_3d)
+			game_ui.show_score_popup(score, screen_position, has_multiplier)
+		else:
+			game_ui.show_score_popup(score, Vector2(get_viewport().size / 2), has_multiplier)
+
+func apply_persistent_effect(effect: Dictionary):
+	match effect.type:
+		"disable_next_round":
+			var tooth_name = effect.tooth_name
+			if not tooth_name in disabled_teeth_next_round:
+				disabled_teeth_next_round.append(tooth_name)
+				print("🚫 Tooth ", tooth_name, " will be disabled next round")
+		
+		"global_multiplier":
+			global_point_multiplier *= effect.multiplier
+			print("🌟 Global point multiplier increased to ", global_point_multiplier)
+		
+		"add_bite_tooth":
+			# Add another random bite tooth
+			var available_teeth = get_available_teeth_for_bite()
+			if available_teeth.size() > 0:
+				var new_bite_tooth = available_teeth[randi() % available_teeth.size()]
+				additional_bite_teeth.append(new_bite_tooth)
+				print("💀 Added additional bite tooth: ", new_bite_tooth)
+
+func get_available_teeth_for_bite() -> Array:
+	var all_teeth = []
+	for child in alligator.get_children():
+		if child is Area3D and "Tooth" in child.name:
+			all_teeth.append(child.name)
+	
+	# Remove teeth that are already bite teeth or have safe tattoos
+	var safe_teeth = get_teeth_with_safe_tattoos()
+	var available = []
+	
+	for tooth in all_teeth:
+		if tooth != alligator.bite_tooth_index and not tooth in additional_bite_teeth and not tooth in safe_teeth:
+			available.append(tooth)
+	
+	return available
 
 # Add this to GameManager.gd
 func is_multiplier_tooth(tooth_name):
 	return teeth_multipliers.has(tooth_name) and teeth_multipliers[tooth_name] > 1
 
 func _on_tooth_bit():
+	# Check if the pressed tooth is any of the bite teeth
+	var last_pressed = alligator.pressed_teeth[-1] if alligator.pressed_teeth.size() > 0 else ""
 	
-	# Apply penalty - lose 5% of round score
-	var penalty = round(round_score * 0.05)
-	round_score -= penalty
+	var is_bite_tooth = (last_pressed == alligator.bite_tooth_index or last_pressed in additional_bite_teeth)
 	
-	# End the round with bite flag
-	end_round(true)
+	if is_bite_tooth:
+		print("💀 BIT! Tooth ", last_pressed, " was a bite tooth")
+		# Apply penalty - lose 5% of round score
+		var penalty = round(round_score * 0.05)
+		round_score -= penalty
+		
+		# End the round with bite flag
+		end_round(true)
+	else:
+		print("🤔 Bite triggered but last pressed tooth wasn't a bite tooth")
 
 # Update the end_round function in GameManager.gd
 func end_round(bite_triggered = false):

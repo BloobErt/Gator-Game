@@ -78,48 +78,76 @@ func _store_original_tooth_positions():
 			var pose = skeleton.get_bone_pose(bone_idx)
 			original_tooth_positions[bone_name] = pose.origin.y
 
-# Select a random bite tooth
 func _select_random_bite_tooth():
 	var tooth_areas = []
 	
 	for child in get_children():
-		# Check if it's an Area3D with "Tooth" in the name
 		if child is Area3D and "Tooth" in child.name:
 			tooth_areas.append(child)
 	
-	if tooth_areas.size() > 0:
-		var random_index = randi() % tooth_areas.size()
-		bite_tooth_index = tooth_areas[random_index].name
+	# Get safe teeth from GameManager
+	var safe_teeth = get_safe_teeth()
+	
+	# Filter out safe teeth
+	var valid_bite_teeth = []
+	for tooth in tooth_areas:
+		var tooth_name = tooth.name
+		if not safe_teeth.has(tooth_name):
+			valid_bite_teeth.append(tooth)
+		else:
+			print("Tooth ", tooth_name, " is protected by Safe tattoo")
+	
+	# Select from remaining teeth
+	if valid_bite_teeth.size() > 0:
+		var random_index = randi() % valid_bite_teeth.size()
+		bite_tooth_index = valid_bite_teeth[random_index].name
+		print("Selected bite tooth: ", bite_tooth_index)
+	else:
+		print("WARNING: All teeth are safe! Selecting random tooth anyway.")
+		if tooth_areas.size() > 0:
+			var random_index = randi() % tooth_areas.size()
+			bite_tooth_index = tooth_areas[random_index].name
 
-# Update press_tooth to pass the Area3D node rather than just the name
+func get_safe_teeth() -> Array:
+	var safe_teeth = []
+	
+	var game_manager = get_parent()
+	if game_manager and game_manager.has_method("get_teeth_with_safe_tattoos"):
+		safe_teeth = game_manager.get_teeth_with_safe_tattoos()
+	
+	return safe_teeth
+
 func press_tooth(tooth_name):
-	# Convert to string if needed
 	var node_name = String(tooth_name)
 	
-	# Check if this tooth exists and isn't already pressed
 	if not has_node(node_name) or node_name in pressed_teeth:
 		return false
 	
-	# Get the tooth node (Area3D)
 	var tooth_node = get_node(node_name)
-	
-	# Mark as pressed
 	pressed_teeth.append(node_name)
 	
-	# Get the GameManager to check for multipliers
-	var game_manager = get_node(".")  # Adjust path as needed
+	var game_manager = get_node(".")
 	var is_multiplier = false
 	
 	if game_manager and game_manager.has_method("is_multiplier_tooth"):
 		is_multiplier = game_manager.is_multiplier_tooth(node_name)
 	
-	# Animate the corresponding bone
+	# Animate the tooth
 	if node_name in tooth_to_bone_map:
 		var bone_name = tooth_to_bone_map[node_name]
 		_animate_tooth_bone(bone_name, is_multiplier, tooth_node)
 	
-	# Check if it's the bite tooth
-	if node_name == bite_tooth_index:
+	# Check if it's ANY bite tooth (main or additional)
+	var is_bite_tooth = (node_name == bite_tooth_index)
+	
+	# Check additional bite teeth from GameManager
+	if game_manager and game_manager.has_method("get_additional_bite_teeth"):
+		var additional_bites = game_manager.get_additional_bite_teeth()
+		if node_name in additional_bites:
+			is_bite_tooth = true
+			print("Hit additional bite tooth: ", node_name)
+	
+	if is_bite_tooth:
 		_trigger_bite_animation()
 		emit_signal("tooth_bit")
 		return true
