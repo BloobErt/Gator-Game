@@ -12,6 +12,6 @@ cost = 5
 icon_texture = ExtResource("1_l2lel")
 rarity = "common"
 effect_type = "simple_multiplier"
-effect_value = 1.0
+effect_value = 2.0
 effect_data = {}
 metadata/_custom_type_script = "uid://bdyc72pl2m0y8"

@@ -48,7 +48,7 @@ func apply_effect(tooth_name: String, base_value: int, base_multiplier: float, g
 			
 		"high_value_no_growth":
 			# Set very high value but prevent growth
-			result.value = int(effect_data.get("fixed_value", 1000))
+			result.value = int(effect_data.get("fixed_value", effect_value))
 			result.special_effects.append("Fixed high value - cannot be modified by other effects")
 			
 		"lucky_thirteen":
@@ -62,7 +62,7 @@ func apply_effect(tooth_name: String, base_value: int, base_multiplier: float, g
 				
 		"skip_next_round":
 			# Triple value but make tooth unusable next round
-			result.multiplier *= 3.0
+			result.multiplier *= effect_value
 			result.persistent_effects.append({
 				"type": "disable_next_round",
 				"tooth_name": tooth_name
