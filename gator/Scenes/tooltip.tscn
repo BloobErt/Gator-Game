@@ -41,13 +41,16 @@ theme_override_constants/margin_bottom = 6
 
 [node name="ContentContainer" type="VBoxContainer" parent="Background/MarginContainer"]
 layout_mode = 2
+alignment = 1
 
 [node name="NameLabel" type="Label" parent="Background/MarginContainer/ContentContainer"]
+custom_minimum_size = Vector2(157, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.87451, 0.00784314, 1)
 theme_override_font_sizes/font_size = 32
 text = "TattooName"
 horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="DescriptionLabel" type="Label" parent="Background/MarginContainer/ContentContainer"]
 custom_minimum_size = Vector2(157, 0)

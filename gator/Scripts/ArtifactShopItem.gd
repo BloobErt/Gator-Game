@@ -7,6 +7,7 @@ signal hide_tooltip()
 var artifact_data: ArtifactData
 var is_purchased = false
 var is_mouse_inside = false
+var tooltip_shown = false
 
 @onready var icon = $Icon
 @onready var cost_label = $CostLabel
@@ -33,25 +34,22 @@ func setup_artifact(data: ArtifactData):
 
 func _gui_input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		tooltip_shown = false
 		if not is_purchased and artifact_data:
 			emit_signal("artifact_purchased", artifact_data, artifact_data.cost)
 			# Hide tooltip when clicking
 			emit_signal("hide_tooltip")
-	
-	elif event is InputEventMouseMotion and is_mouse_inside and artifact_data:
-		# Update tooltip position on mouse movement
-		emit_signal("show_tooltip", artifact_data.name, artifact_data.description, 
-				   global_position + event.position)
 
 func _mouse_entered():
 	is_mouse_inside = true
-	
 	if artifact_data:
+		tooltip_shown = true
 		var tooltip_pos = global_position + Vector2(size.x / 2, 0)
 		emit_signal("show_tooltip", artifact_data.name, artifact_data.description, tooltip_pos)
 
 func _mouse_exited():
 	is_mouse_inside = false
+	tooltip_shown = false
 	emit_signal("hide_tooltip")
 
 func mark_as_purchased():
