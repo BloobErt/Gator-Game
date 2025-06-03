@@ -144,16 +144,37 @@ func generate_tattoo_pool():
 		print("❌ Could not open tattoo directory: ", tattoo_folder)
 
 func generate_artifact_pool():
-	# Create artifacts (these are purchased directly, not dragged)
+	# Load artifacts from resources folder instead of creating them programmatically
 	available_artifacts.clear()
 	
-	available_artifacts.append(ArtifactData.new("steady_hand", "Steady Hand", "After 3 teeth, 1.2x multiplier", 15))
-	available_artifacts.append(ArtifactData.new("risk_taker", "Risk Taker", "After 5 teeth, 1.5x multiplier", 20))
-	available_artifacts.append(ArtifactData.new("early_bird", "Early Bird", "First tooth has 2x value", 12))
-	available_artifacts.append(ArtifactData.new("lucky_streak", "Lucky Streak", "Chain bonus for consecutive teeth", 18))
-	available_artifacts.append(ArtifactData.new("safety_net", "Safety Net", "Reduced bite penalty", 10))
-	available_artifacts.append(ArtifactData.new("double_down", "Double Down", "Last tooth pressed gets 2x", 16))
-	available_artifacts.append(ArtifactData.new("insurance", "Insurance", "First bite doesn't end round", 25))
+	var artifact_folder = "res://Scripts/Resources/Artifacts/"
+	var dir = DirAccess.open(artifact_folder)
+	
+	if dir:
+		dir.list_dir_begin()
+		var file_name = dir.get_next()
+		
+		while file_name != "":
+			if file_name.ends_with(".tres"):
+				var full_path = artifact_folder + file_name
+				print("Attempting to load artifact: ", full_path)
+				
+				var artifact_data = load(full_path) as ArtifactData
+				if artifact_data:
+					available_artifacts.append(artifact_data)
+					print("✅ Loaded artifact: ", artifact_data.name)
+					print("  - Type: ", artifact_data.effect_type)
+					print("  - Is Active: ", artifact_data.is_active_artifact)
+					print("  - Uses: ", artifact_data.max_uses)
+				else:
+					print("❌ Failed to load artifact at: ", full_path)
+			
+			file_name = dir.get_next()
+		
+		dir.list_dir_end()
+		print("Total artifacts loaded: ", available_artifacts.size())
+	else:
+		print("❌ Could not open artifact directory: ", artifact_folder)
 
 func generate_shop_items():
 	var shuffled_tattoos: Array[TattooData] = []
@@ -225,34 +246,63 @@ func _on_tattoo_applied_to_slot(slot_index: int, tattoo_data: TattooData):
 func _on_artifact_purchased(artifact_data: ArtifactData, cost: int):
 	print("Artifact purchase attempted: ", artifact_data.name, " for ", cost, " gold")
 	
-	# Check if player has enough money
 	if player_money >= cost:
-		# Check if artifact is already owned
+		# Check if artifact is already owned (for evolution)
 		var already_owned = false
+		var existing_artifact = null
+		
 		for owned in purchased_artifacts:
 			if owned.id == artifact_data.id:
 				already_owned = true
+				existing_artifact = owned
 				break
 		
-		if not already_owned:
-			# Purchase successful
+		if already_owned and artifact_data.can_evolve:
+			# Handle evolution
 			player_money -= cost
-			purchased_artifacts.append(artifact_data)
-			update_money_display()
 			
-			# Mark the artifact as purchased in the shop
-			for slot in artifact_slots:
-				if slot.artifact_data and slot.artifact_data.id == artifact_data.id:
-					slot.mark_as_purchased()
-					break
+			# Create evolved form
+			if artifact_data.evolved_form:
+				# Remove old version
+				purchased_artifacts.erase(existing_artifact)
+				# Add evolved version
+				purchased_artifacts.append(artifact_data.evolved_form)
+				
+				print("🔮 Artifact evolved to: ", artifact_data.evolved_form.name)
+			
+		elif not already_owned:
+			# Normal purchase
+			player_money -= cost
+			
+			# Create a copy with reset uses
+			var artifact_copy = artifact_data.duplicate()
+			artifact_copy.reset_uses()
+			purchased_artifacts.append(artifact_copy)
 			
 			print("Artifact purchased successfully! New balance: ", player_money)
-			print("Owned artifacts: ", purchased_artifacts.size())
 		else:
-			print("Artifact already owned!")
+			print("Artifact already owned and cannot evolve!")
+			return
+		
+		update_money_display()
+		
+		# Mark artifacts as purchased/evolved in shop UI
+		update_artifact_shop_display()
+		
 	else:
 		print("Not enough money! Need: ", cost, " Have: ", player_money)
-		# You could add visual feedback here (screen shake, red flash, etc.)
+
+func create_active_artifact_ui():
+	# This would create UI buttons for active artifacts
+	# You'd call this when the shop closes or during gameplay
+	for artifact in purchased_artifacts:
+		if artifact.is_active_artifact and artifact.uses_remaining != 0:
+			create_artifact_button(artifact)
+
+func create_artifact_button(artifact: ArtifactData):
+	# Create a button for using active artifacts
+	# Implementation depends on your UI setup
+	print("Creating button for active artifact: ", artifact.name)
 
 func create_random_tooth_mapping():
 	# Create mapping from shop slots to actual game teeth
@@ -274,6 +324,29 @@ func create_random_tooth_mapping():
 	
 	return tooth_mapping
 
+func update_artifact_shop_display():
+	# Update all artifact slots to show current ownership status
+	for slot in artifact_slots:
+		if slot.artifact_data:
+			var is_owned = false
+			var can_evolve = false
+			
+			for owned in purchased_artifacts:
+				if owned.id == slot.artifact_data.id:
+					is_owned = true
+					break
+			
+			# Check if player can evolve this artifact
+			if slot.artifact_data.can_evolve:
+				can_evolve = slot.artifact_data.can_evolve_now(purchased_artifacts)
+			
+			if is_owned and not can_evolve:
+				slot.mark_as_purchased()
+			elif can_evolve:
+				slot.mark_as_evolvable()  # You'd need to implement this
+			else:
+				slot.mark_as_available()
+
 func update_money_display():
 	money_label.text = "Money: " + str(player_money)
 
@@ -285,6 +358,8 @@ func _on_clear_tooth_pressed():
 func _on_exit_pressed():
 	visible = false
 	var final_mapping = create_random_tooth_mapping()
+	
+	# Pass both tattoo mapping and purchased artifacts
 	emit_signal("shop_closed", final_mapping, purchased_artifacts.duplicate())
 
 # Make sure this function exists and has 2 parameters:

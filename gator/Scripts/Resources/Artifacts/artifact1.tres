@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ArtifactData" load_steps=3 format=3 uid="uid://b0attyfth5p2r"]
+
+[ext_resource type="Texture2D" uid="uid://bynyxfhyv82da" path="res://Assets/PlaceholderArtifacts1.png" id="1_m552g"]
+[ext_resource type="Script" uid="uid://b2wr7ajwqjar1" path="res://Scripts/Resources/ArtifactData.gd" id="2_npmr1"]
+
+[resource]
+script = ExtResource("2_npmr1")
+id = "tooth_modifier"
+name = "Tooth Eater"
+description = "eats enamel, more space for tattoos!"
+cost = 7
+icon_texture = ExtResource("1_m552g")
+rarity = "rare"
+effect_type = "passive"
+effect_data = {}
+is_active_artifact = true
+uses_remaining = 3
+max_uses = 3
+can_evolve = false
+evolution_condition = ""
+metadata/_custom_type_script = "uid://b2wr7ajwqjar1"

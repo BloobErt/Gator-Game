@@ -16,8 +16,10 @@ var disabled_teeth_next_round: Array = []
 var global_point_multiplier: float = 1.0
 var additional_bite_teeth: Array = []
 
-# Artifacts (special bonuses)
-var active_artifacts = []
+var owned_artifacts: Array[ArtifactData] = []
+var active_artifact_effects: Dictionary = {} # For persistent effects
+var safe_teeth_revealed: Array = []
+var modified_teeth: Dictionary = {} # For teeth with changed properties
 
 # References
 @onready var alligator = $Alligator
@@ -49,9 +51,6 @@ func start_level(level):
 	score = 0
 	current_round = 1
 	level_target_score = 100 * level
-	
-	# Generate artifacts for this level
-	active_artifacts = generate_artifacts_for_level(level)
 	
 	# Start the first round
 	start_new_round()
@@ -100,17 +99,23 @@ func _on_tooth_pressed(tooth_name):
 		print("Tooth ", tooth_name, " is disabled this round!")
 		return
 	
-	# Calculate base score for this tooth
+	# Get base values (modified by artifacts if applicable)
 	var base_value = teeth_values.get(tooth_name, 10)
 	var base_multiplier = teeth_multipliers.get(tooth_name, 1.0)
+	
+	# Apply tooth modifications from artifacts
+	if modified_teeth.has(tooth_name):
+		var mod = modified_teeth[tooth_name]
+		base_value = int(base_value * mod.value_multiplier)
+		print("🔧 Tooth modified by artifact: ", base_value)
 	
 	print("=== TOOTH PRESSED: ", tooth_name, " ===")
 	print("Base value: ", base_value)
 	print("Base multiplier: ", base_multiplier)
 	
-	# Create game state for tattoo effects
+	# Create game state for effects
 	var game_state = {
-		"teeth_pressed_count": alligator.pressed_teeth.size() + 1, # +1 because this tooth isn't added to pressed_teeth yet
+		"teeth_pressed_count": alligator.pressed_teeth.size() + 1,
 		"current_round": current_round,
 		"is_bite_tooth": tooth_name == alligator.bite_tooth_index,
 		"round_score": round_score,
@@ -122,32 +127,31 @@ func _on_tooth_pressed(tooth_name):
 	var all_special_effects = []
 	var all_persistent_effects = []
 	
-	# Apply tattoo effects if this tooth has tattoos
+	# Apply tattoo effects first
 	if current_tooth_tattoos.has(tooth_name):
 		var tattoos = current_tooth_tattoos[tooth_name]
 		print("Found ", tattoos.size(), " tattoos on this tooth")
 		
 		for tattoo in tattoos:
-			print("Applying tattoo: ", tattoo.name, " (Type: ", tattoo.effect_type, ")")
-			
 			var effect_result = tattoo.apply_effect(tooth_name, final_value, final_multiplier, game_state)
 			
-			# Handle special case: high_value_no_growth overrides everything
 			if tattoo.effect_type == "high_value_no_growth":
 				final_value = effect_result.value
-				final_multiplier = 1.0 # No other multipliers apply
-				print("  High value no growth: Set to ", final_value, " (no other effects apply)")
+				final_multiplier = 1.0
 				break
 			else:
 				final_value = effect_result.value
 				final_multiplier = effect_result.multiplier
 			
-			# Collect special effects and persistent effects
 			all_special_effects.append_array(effect_result.special_effects)
 			all_persistent_effects.append_array(effect_result.persistent_effects)
-			
-			print("  Value: ", base_value, " -> ", final_value)
-			print("  Multiplier: ", base_multiplier, " -> ", final_multiplier)
+	
+	# Apply artifact effects
+	var artifact_result = apply_artifact_effects_to_tooth(tooth_name, final_value, final_multiplier, game_state)
+	final_value = artifact_result.value
+	final_multiplier = artifact_result.multiplier
+	all_special_effects.append_array(artifact_result.special_effects)
+	all_persistent_effects.append_array(artifact_result.persistent_effects)
 	
 	# Apply global point multiplier
 	var tooth_score = final_value * final_multiplier * global_point_multiplier
@@ -156,7 +160,7 @@ func _on_tooth_pressed(tooth_name):
 	
 	# Show special effect messages
 	for effect_msg in all_special_effects:
-		print("🌟 SPECIAL EFFECT: ", effect_msg)
+		print("🌟 EFFECT: ", effect_msg)
 	
 	# Handle persistent effects
 	for persistent_effect in all_persistent_effects:
@@ -164,9 +168,6 @@ func _on_tooth_pressed(tooth_name):
 	
 	# Show score popup
 	show_score_popup_at_tooth(tooth_name, tooth_score, final_multiplier > base_multiplier)
-	
-	# Apply artifact effects
-	tooth_score = apply_artifact_effects(tooth_score, alligator.pressed_teeth.size())
 	
 	# Add to round score
 	round_score += tooth_score
@@ -228,21 +229,31 @@ func is_multiplier_tooth(tooth_name):
 	return teeth_multipliers.has(tooth_name) and teeth_multipliers[tooth_name] > 1
 
 func _on_tooth_bit():
-	# Check if the pressed tooth is any of the bite teeth
 	var last_pressed = alligator.pressed_teeth[-1] if alligator.pressed_teeth.size() > 0 else ""
-	
 	var is_bite_tooth = (last_pressed == alligator.bite_tooth_index or last_pressed in additional_bite_teeth)
 	
 	if is_bite_tooth:
 		print("💀 BIT! Tooth ", last_pressed, " was a bite tooth")
-		# Apply penalty - lose 5% of round score
-		var penalty = round(round_score * 0.05)
-		round_score -= penalty
 		
-		# End the round with bite flag
-		end_round(true)
-	else:
-		print("🤔 Bite triggered but last pressed tooth wasn't a bite tooth")
+		# Check if artifacts allow continuing after bite
+		var game_state = {
+			"bite_tooth": last_pressed,
+			"round_score": round_score
+		}
+		
+		var can_continue = handle_bite_tooth_artifacts(game_state)
+		
+		if can_continue:
+			print("✨ Artifact prevents bite ending the round!")
+			# Apply penalty but don't end round
+			var penalty = round(round_score * 0.05)
+			round_score -= penalty
+			update_ui()
+		else:
+			# Normal bite behavior
+			var penalty = round(round_score * 0.05)
+			round_score -= penalty
+			end_round(true)
 
 # Update the end_round function in GameManager.gd
 func end_round(bite_triggered = false):
@@ -325,56 +336,140 @@ func assign_teeth_multipliers():
 			teeth_multipliers[tooth] = 2.0  # 2x multiplier
 			available_teeth.remove_at(index)
 
-func generate_artifacts_for_level(level):
-	# This generates random artifacts based on level
-	var artifacts = []
+func add_artifact(artifact: ArtifactData):
+	# Check for evolution
+	if artifact.can_evolve_now(owned_artifacts):
+		var evolved = artifact.evolve()
+		owned_artifacts.append(evolved)
+		print("🔮 Artifact evolved to: ", evolved.name)
+	else:
+		owned_artifacts.append(artifact)
+		print("📦 Added artifact: ", artifact.name)
 	
-	# Example artifacts - you can expand this with more types
-	var possible_artifacts = [
-		{
-			"name": "Steady Hand",
-			"description": "After pressing 3 teeth, multiply score by 1.2",
-			"threshold": 3,
-			"multiplier": 1.2
-		},
-		{
-			"name": "Risk Taker",
-			"description": "After pressing 5 teeth, multiply score by 1.5",
-			"threshold": 5,
-			"multiplier": 1.5
-		},
-		{
-			"name": "Early Bird",
-			"description": "First tooth pressed has 2x value",
-			"threshold": 1,
-			"multiplier": 2.0
-		}
-	]
-	
-	# Select random artifacts based on level
-	var num_artifacts = 1 + (level / 2)  # More artifacts in higher levels
-	for i in range(min(num_artifacts, possible_artifacts.size())):
-		var index = randi() % possible_artifacts.size()
-		artifacts.append(possible_artifacts[index])
-		possible_artifacts.remove_at(index)
-	
-	return artifacts
+	# Apply any persistent effects
+	apply_persistent_artifact_effects()
 
-func apply_artifact_effects(tooth_score, teeth_pressed):
-	var modified_score = tooth_score
+# Apply passive artifact effects to tooth presses
+func apply_artifact_effects_to_tooth(tooth_name: String, base_value: int, base_multiplier: float, game_state: Dictionary) -> Dictionary:
+	var result = {
+		"value": base_value,
+		"multiplier": base_multiplier,
+		"special_effects": [],
+		"persistent_effects": []
+	}
 	
-	for artifact in active_artifacts:
-		if artifact.has("threshold") and teeth_pressed == artifact.threshold:
-			modified_score *= artifact.get("multiplier", 1.0)
+	for artifact in owned_artifacts:
+		if artifact.effect_type == "passive":
+			var artifact_result = artifact.apply_passive_effect(tooth_name, result.value, result.multiplier, game_state)
+			result.value = artifact_result.value
+			result.multiplier = artifact_result.multiplier
+			result.special_effects.append_array(artifact_result.special_effects)
+			result.persistent_effects.append_array(artifact_result.persistent_effects)
 	
-	return modified_score
+	return result
 
-func display_artifacts():
-	# Later, you'll create UI elements for this
-	# For now, just print to console
-	print("Active Artifacts:")
-	for artifact in active_artifacts:
-		print("- ", artifact.name, ": ", artifact.description)
+# Handle bite tooth trigger effects
+func handle_bite_tooth_artifacts(game_state: Dictionary) -> bool:
+	var can_continue = false
+	
+	for artifact in owned_artifacts:
+		if artifact.effect_type == "trigger":
+			var trigger_result = artifact.apply_trigger_effect("bite_tooth_hit", game_state)
+			
+			if trigger_result.can_continue:
+				can_continue = true
+			
+			for effect in trigger_result.special_effects:
+				print("🎯 Artifact Trigger: ", effect)
+	
+	return can_continue
+
+# Use an active artifact on a specific tooth
+func use_active_artifact(artifact_id: String, target_tooth: String = "") -> bool:
+	for artifact in owned_artifacts:
+		if artifact.id == artifact_id and artifact.is_active_artifact:
+			var game_state = {
+				"tooth_tattoos": current_tooth_tattoos,
+				"current_round": current_round,
+				"teeth_pressed_count": alligator.pressed_teeth.size()
+			}
+			
+			var result = artifact.apply_active_effect(target_tooth, game_state)
+			
+			if result.success:
+				# Apply persistent effects
+				for effect in result.persistent_effects:
+					apply_artifact_persistent_effect(effect)
+				
+				# Show special effects
+				for effect in result.special_effects:
+					print("⚡ Active Artifact: ", effect)
+				
+				return true
+			else:
+				for effect in result.special_effects:
+					print("❌ Artifact Failed: ", effect)
+	
+	return false
+
+# Apply persistent effects from artifacts
+func apply_artifact_persistent_effect(effect: Dictionary):
+	match effect.type:
+		"modify_tooth":
+			var tooth_name = effect.tooth_name
+			modified_teeth[tooth_name] = {
+				"value_multiplier": effect.value_multiplier,
+				"max_tattoos": effect.max_tattoos
+			}
+			print("🔧 Modified tooth ", tooth_name)
+		
+		"reveal_safe_teeth":
+			reveal_safe_teeth(effect.count)
+		
+		"set_max_rounds":
+			# This would modify game rules
+			print("⏰ Max rounds set to: ", effect.value)
+
+# Reveal safe teeth with visual indicators
+func reveal_safe_teeth(count: int):
+	var safe_teeth = get_teeth_with_safe_tattoos()
+	safe_teeth_revealed = safe_teeth.slice(0, min(count, safe_teeth.size()))
+	
+	# Create visual indicators (you'd implement this based on your UI system)
+	for tooth_name in safe_teeth_revealed:
+		create_safe_tooth_indicator(tooth_name)
+	
+	print("👁️ Revealed safe teeth: ", safe_teeth_revealed)
+
+# Create visual indicator above safe tooth (placeholder)
+func create_safe_tooth_indicator(tooth_name: String):
+	# This would create an arrow or icon above the tooth
+	# Implementation depends on your 3D scene setup
+	print("Creating safe indicator for: ", tooth_name)
+
+# Apply persistent artifact effects at round start
+func apply_persistent_artifact_effects():
+	for artifact in owned_artifacts:
+		if artifact.effect_type == "persistent":
+			var game_state = {
+				"current_round": current_round,
+				"current_level": current_level
+			}
+			
+			var result = artifact.apply_persistent_effect(game_state)
+			
+			for effect in result.special_effects:
+				print("🔄 Persistent Effect: ", effect)
+			
+			for modification in result.game_modifications:
+				apply_game_modification(modification)
+
+# Apply game modifications from artifacts
+func apply_game_modification(modification: Dictionary):
+	match modification.type:
+		"set_max_rounds":
+			# You'd modify your round system here
+			print("Game modification: Max rounds = ", modification.value)
 
 func update_ui():
 	
@@ -401,16 +496,9 @@ func _on_shop_closed(teeth_tattoo_mapping, artifacts_list):
 	# Store the new tattoo mapping
 	current_tooth_tattoos = teeth_tattoo_mapping
 	
-	# Store purchased artifacts
-	active_artifacts = artifacts_list
-	
 	print("Shop closed. Tattoo mapping received:")
 	for tooth_name in current_tooth_tattoos.keys():
 		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos")
-	
-	print("Active artifacts: ", active_artifacts.size())
-	for artifact in active_artifacts:
-		print("- ", artifact.name)
 	
 	# Continue to next round
 	_proceed_to_next_round()

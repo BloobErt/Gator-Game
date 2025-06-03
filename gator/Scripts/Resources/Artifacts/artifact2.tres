@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ArtifactData" load_steps=3 format=3 uid="uid://c6ceou3mwjwww"]
+
+[ext_resource type="Texture2D" uid="uid://c5bq8scjcl87l" path="res://Assets/PlaceholderArtifacts2.png" id="1_5j7lx"]
+[ext_resource type="Script" uid="uid://b2wr7ajwqjar1" path="res://Scripts/Resources/ArtifactData.gd" id="2_vc2c6"]
+
+[resource]
+script = ExtResource("2_vc2c6")
+id = "2"
+name = "Early Bird"
+description = "It gets the freaking worm on you"
+cost = 10
+icon_texture = ExtResource("1_5j7lx")
+rarity = "rare"
+effect_type = "passive"
+effect_data = {}
+is_active_artifact = false
+uses_remaining = -1
+max_uses = -1
+can_evolve = false
+evolution_condition = ""
+metadata/_custom_type_script = "uid://b2wr7ajwqjar1"
