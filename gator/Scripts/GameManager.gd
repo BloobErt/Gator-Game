@@ -492,13 +492,29 @@ func _on_continue_to_shop():
 		# Fallback if shop isn't available
 		_proceed_to_next_round()
 
-func _on_shop_closed(teeth_tattoo_mapping, artifacts_list):
+func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 	# Store the new tattoo mapping
 	current_tooth_tattoos = teeth_tattoo_mapping
 	
-	print("Shop closed. Tattoo mapping received:")
+	print("=== SHOP CLOSED DEBUG ===")
+	print("Tattoo mapping received:")
 	for tooth_name in current_tooth_tattoos.keys():
-		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos")
+		print("Tooth ", tooth_name, " has ", current_tooth_tattoos[tooth_name].size(), " tattoos:")
+		for i in range(current_tooth_tattoos[tooth_name].size()):
+			var tattoo = current_tooth_tattoos[tooth_name][i]
+			print("  - ", tattoo.name, " (ID: ", tattoo.id, ", Type: ", tattoo.effect_type, ")")
+	
+	# Add only newly purchased artifacts to the game
+	print("Processing ", newly_purchased_artifacts.size(), " newly purchased artifacts...")
+	for artifact in newly_purchased_artifacts:
+		print("Adding new artifact: ", artifact.name, " (ID: ", artifact.id, ")")
+		add_artifact(artifact)
+	
+	print("Total owned artifacts: ", owned_artifacts.size())
+	for artifact in owned_artifacts:
+		print("- ", artifact.name, " (Type: ", artifact.effect_type, ")")
+	
+	print("=== END SHOP DEBUG ===")
 	
 	# Continue to next round
 	_proceed_to_next_round()

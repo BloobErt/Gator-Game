@@ -7,6 +7,7 @@ var available_artifacts: Array[ArtifactData] = []
 var player_money: int = 0
 var teeth_slots: Array = []  # Array of ToothSlot nodes
 var purchased_artifacts: Array[ArtifactData] = []
+var newly_purchased_artifacts: Array[ArtifactData] = []
 
 @onready var money_label = $ShopContainer/MoneyDisplay/MoneyLabel
 @onready var tattoo_slots = [$ShopContainer/TattooSection/TattooContainer/TattooSlot1,
@@ -68,6 +69,10 @@ func _ready():
 func open_shop(money: int):
 	print("Shop.open_shop called with money: ", money)
 	player_money = money
+	
+	# Clear newly purchased artifacts when opening shop
+	newly_purchased_artifacts.clear()
+	
 	update_money_display()
 	generate_shop_items()
 	visible = true
@@ -263,10 +268,16 @@ func _on_artifact_purchased(artifact_data: ArtifactData, cost: int):
 			
 			# Create evolved form
 			if artifact_data.evolved_form:
-				# Remove old version
+				# Remove old version from both lists
 				purchased_artifacts.erase(existing_artifact)
-				# Add evolved version
-				purchased_artifacts.append(artifact_data.evolved_form)
+				if existing_artifact in newly_purchased_artifacts:
+					newly_purchased_artifacts.erase(existing_artifact)
+				
+				# Add evolved version to both lists
+				var evolved_copy = artifact_data.evolved_form.duplicate()
+				evolved_copy.reset_uses()
+				purchased_artifacts.append(evolved_copy)
+				newly_purchased_artifacts.append(evolved_copy)
 				
 				print("🔮 Artifact evolved to: ", artifact_data.evolved_form.name)
 			
@@ -278,6 +289,7 @@ func _on_artifact_purchased(artifact_data: ArtifactData, cost: int):
 			var artifact_copy = artifact_data.duplicate()
 			artifact_copy.reset_uses()
 			purchased_artifacts.append(artifact_copy)
+			newly_purchased_artifacts.append(artifact_copy)  # Add to newly purchased
 			
 			print("Artifact purchased successfully! New balance: ", player_money)
 		else:
@@ -285,8 +297,6 @@ func _on_artifact_purchased(artifact_data: ArtifactData, cost: int):
 			return
 		
 		update_money_display()
-		
-		# Mark artifacts as purchased/evolved in shop UI
 		update_artifact_shop_display()
 		
 	else:
@@ -359,8 +369,9 @@ func _on_exit_pressed():
 	visible = false
 	var final_mapping = create_random_tooth_mapping()
 	
-	# Pass both tattoo mapping and purchased artifacts
-	emit_signal("shop_closed", final_mapping, purchased_artifacts.duplicate())
+	# Pass only newly purchased artifacts, not all purchased artifacts
+	print("Passing ", newly_purchased_artifacts.size(), " newly purchased artifacts to game")
+	emit_signal("shop_closed", final_mapping, newly_purchased_artifacts.duplicate())
 
 # Make sure this function exists and has 2 parameters:
 func _on_drag_started(tattoo_data: TattooData):
