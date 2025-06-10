@@ -26,6 +26,7 @@ var modified_teeth: Dictionary = {} # For teeth with changed properties
 @onready var game_ui = $GameUI
 @onready var round_transition = $RoundTransition
 @onready var shop = $Shop
+@onready var maze_background = $MazeBackground
 
 func _ready():
 	# Connect signals from alligator
@@ -39,6 +40,8 @@ func _ready():
 		push_error("Round transition reference is missing!")
 	# Start the first level
 	start_level(current_level)
+	if maze_background:
+		maze_background.new_round_rotation()
 	update_ui()
 	if shop:
 		shop.shop_closed.connect(_on_shop_closed)
@@ -51,6 +54,27 @@ func start_level(level):
 	score = 0
 	current_round = 1
 	level_target_score = 100 * level
+	
+	if maze_background:
+		match level:
+			1:
+				# Default colors (already set)
+				pass
+			2:
+				maze_background.set_custom_colors(
+					Color("#1a2810"), Color("#2a4818"), Color("#3a6820")  # Greener
+				)
+			3:
+				maze_background.set_custom_colors(
+					Color("#28101a"), Color("#481828"), Color("#682038")  # Redder
+				)
+			_:
+				# Procedural color generation for higher levels
+				var hue = (level * 0.2) % 1.0
+				var base_color = Color.from_hsv(hue, 0.6, 0.2)
+				var mid_color = Color.from_hsv(hue, 0.6, 0.3)
+				var accent_color = Color.from_hsv(hue, 0.6, 0.4)
+				maze_background.set_custom_colors(base_color, mid_color, accent_color)
 	
 	# Start the first round
 	start_new_round()
@@ -485,7 +509,8 @@ func update_ui():
 		push_error("Game UI reference is null! Check the path.")
 
 func _on_continue_to_shop():
-	# Instead of immediately proceeding, open the shop first
+	if maze_background:
+		maze_background.enter_shop_mode()
 	if shop:
 		shop.open_shop(money)
 	else:
@@ -495,7 +520,8 @@ func _on_continue_to_shop():
 func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 	# Store the new tattoo mapping
 	current_tooth_tattoos = teeth_tattoo_mapping
-	
+	if maze_background:
+		maze_background.exit_shop_mode()
 	print("=== SHOP CLOSED DEBUG ===")
 	print("Tattoo mapping received:")
 	for tooth_name in current_tooth_tattoos.keys():
