@@ -40,8 +40,6 @@ func _ready():
 		push_error("Round transition reference is missing!")
 	# Start the first level
 	start_level(current_level)
-	if maze_background:
-		maze_background.new_round_rotation()
 	update_ui()
 	if shop:
 		shop.shop_closed.connect(_on_shop_closed)
@@ -54,7 +52,6 @@ func start_level(level):
 	score = 0
 	current_round = 1
 	level_target_score = 100 * level
-	
 	if maze_background:
 		match level:
 			1:
