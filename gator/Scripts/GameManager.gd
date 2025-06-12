@@ -256,6 +256,8 @@ func _on_tooth_bit():
 	if is_bite_tooth:
 		print("💀 BIT! Tooth ", last_pressed, " was a bite tooth")
 		
+		if maze_background:
+			maze_background.start_bite_transition()
 		# Check if artifacts allow continuing after bite
 		var game_state = {
 			"bite_tooth": last_pressed,
@@ -506,12 +508,12 @@ func update_ui():
 		push_error("Game UI reference is null! Check the path.")
 
 func _on_continue_to_shop():
+	# Don't start transition here - it already started on bite
 	if maze_background:
-		maze_background.enter_shop_mode()
+		maze_background.complete_shop_transition()  # Just complete the transition
 	if shop:
 		shop.open_shop(money)
 	else:
-		# Fallback if shop isn't available
 		_proceed_to_next_round()
 
 func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
@@ -538,6 +540,9 @@ func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 		print("- ", artifact.name, " (Type: ", artifact.effect_type, ")")
 	
 	print("=== END SHOP DEBUG ===")
+	
+	if maze_background:
+		maze_background.exit_shop_mode()
 	
 	# Continue to next round
 	_proceed_to_next_round()

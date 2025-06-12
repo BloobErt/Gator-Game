@@ -12,6 +12,7 @@
 script = ExtResource("1_v0ff7")
 
 [node name="GameUI" parent="." instance=ExtResource("2_vc6s6")]
+layer = -1
 
 [node name="RoundTransition" parent="." instance=ExtResource("3_6ohho")]
 
@@ -32,4 +33,5 @@ transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
 
 [node name="MazeBackground" parent="." instance=ExtResource("2_0i5w4")]
 transform = Transform3D(-4.37114e-08, 0.658689, 0.752415, 0, 0.752415, -0.658689, -1, -2.87922e-08, -3.28891e-08, 0, 0, 0)
+line_width = 5
 background_distance = 17.5

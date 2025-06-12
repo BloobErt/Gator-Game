@@ -40,6 +40,13 @@ var rows_generated: int = 0
 var canvas_layer: CanvasLayer
 var canvas_background: TextureRect
 
+# New variables for opacity-based transitions
+var is_transitioning = false
+var transition_progress = 0.0
+var base_movement_speed = 50.0
+var target_opacity = 1.0
+var current_opacity = 0.0
+
 func _ready():
 	print("🟢 Simple 3D lattice background starting...")
 	
@@ -125,9 +132,12 @@ void fragment() {
 func generate_simple_lattice():
 	print("Generating perfectly tileable lattice texture...")
 	
-	# Make texture height a multiple of cell_size for perfect tiling
-	var rows_needed = (texture_height / cell_size) + 1
-	texture_height = int(rows_needed) * cell_size  # Ensure perfect multiple
+	# DON'T modify texture_height during runtime - keep it fixed!
+	# Only adjust it once if needed for tiling
+	if texture_height % cell_size != 0:
+		var rows_needed = (texture_height / cell_size) + 1
+		texture_height = int(rows_needed) * cell_size
+		print("   One-time texture height adjustment: ", texture_height)
 	
 	# Recalculate grid columns based on current texture width
 	grid_cols = texture_width / cell_size
@@ -136,10 +146,9 @@ func generate_simple_lattice():
 	texture_image = Image.create(texture_width, texture_height, false, Image.FORMAT_RGB8)
 	texture_image.fill(current_colors.primary)
 	
-	print("   Adjusted texture size: ", texture_width, "x", texture_height)
+	print("   Texture size: ", texture_width, "x", texture_height)
 	print("   Cell size: ", cell_size)
-	print("   Grid columns: ", grid_cols, " (should see ", int(grid_cols), " squares across)")
-	print("   Grid rows: ", texture_height / cell_size)
+	print("   Grid: ", int(grid_cols), " x ", int(texture_height / cell_size), " cells")
 	
 	# Draw simple grid - designed for seamless tiling
 	draw_tileable_grid()
@@ -148,7 +157,7 @@ func generate_simple_lattice():
 	background_texture = ImageTexture.new()
 	background_texture.set_image(texture_image)
 	
-	print("✅ Perfectly tileable lattice texture created")
+	print("✅ Lattice texture generated (no size changes during runtime)")
 
 func draw_tileable_grid():
 	print("Drawing perfectly tileable grid...")
@@ -190,7 +199,7 @@ func draw_horizontal_line(y: int):
 func create_2d_overlay():
 	# Simple 2D overlay for shop mode
 	canvas_layer = CanvasLayer.new()
-	canvas_layer.layer = 1
+	canvas_layer.layer = 0
 	canvas_layer.visible = false
 	add_child(canvas_layer)
 	
@@ -199,21 +208,54 @@ func create_2d_overlay():
 	canvas_background.anchor_top = 0
 	canvas_background.anchor_right = 1
 	canvas_background.anchor_bottom = 1
+	
+	# IMPORTANT: Enable proper tiling
 	canvas_background.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	canvas_background.stretch_mode = TextureRect.STRETCH_TILE
+	canvas_background.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST  # Keep pixels crisp
+	
 	canvas_layer.add_child(canvas_background)
+	
+	# Create 2D shader material for scrolling
+	var canvas_material = ShaderMaterial.new()
+	var canvas_shader = Shader.new()
+	canvas_shader.code = create_2d_scrolling_shader()
+	canvas_material.shader = canvas_shader
+	canvas_background.material = canvas_material
+	
+	print("✅ 2D overlay created on layer 0")
+
+func create_2d_scrolling_shader() -> String:
+	return """
+shader_type canvas_item;
+
+uniform sampler2D lattice_texture : source_color, filter_nearest;
+uniform float scroll_offset : hint_range(0.0, 1.0) = 0.0;
+
+void fragment() {
+	vec2 scrolled_uv = UV + vec2(0.0, scroll_offset);
+	vec4 tex_color = texture(lattice_texture, scrolled_uv);
+	COLOR = tex_color;
+}
+"""
 
 func _process(delta):
 	# Update scroll offset for smooth scrolling effect
 	scroll_offset += movement_speed * delta * movement_direction
 	
-	# Update shader for smooth scrolling (this creates the visual movement)
+	# Update both 3D and 2D shaders for scrolling
+	var normalized_offset = fmod(scroll_offset / texture_height, 1.0)
+	
+	# Update 3D shader
 	if background_material:
-		var normalized_offset = fmod(scroll_offset / texture_height, 1.0)
 		background_material.set_shader_parameter("scroll_offset", normalized_offset)
 	
+	# Update 2D shader
+	if canvas_background and canvas_background.material:
+		var canvas_material = canvas_background.material as ShaderMaterial
+		canvas_material.set_shader_parameter("scroll_offset", normalized_offset)
+	
 	# When we've scrolled a full texture height, reset without any generation
-	# This creates seamless infinite scrolling since the texture is designed to tile
 	if abs(scroll_offset) >= texture_height:
 		scroll_offset = fmod(scroll_offset, texture_height)
 		print("Seamless texture wrap - no generation needed!")
@@ -382,7 +424,20 @@ func set_2d_mode():
 		background_quad.visible = false
 	if canvas_layer:
 		canvas_layer.visible = true
-		canvas_background.texture = background_texture
+		
+		# IMPORTANT: Set the texture directly on the TextureRect
+		if canvas_background and background_texture:
+			canvas_background.texture = background_texture
+			print("   2D texture assigned: ", background_texture != null)
+		
+		# Then set up the shader material
+		if canvas_background and canvas_background.material:
+			var canvas_material = canvas_background.material as ShaderMaterial
+			canvas_material.set_shader_parameter("lattice_texture", background_texture)
+			canvas_material.set_shader_parameter("scroll_offset", fmod(scroll_offset / texture_height, 1.0))
+			print("   2D material updated with texture and scroll offset")
+		else:
+			print("   WARNING: 2D canvas material not found!")
 	print("Switched to 2D overlay mode")
 
 # Public functions
@@ -392,28 +447,54 @@ func enter_shop_mode():
 		return
 	
 	is_shop_mode = true
-	movement_direction = -1.0
+	is_transitioning = true
+	transition_progress = 0.0
+	
 	set_2d_mode()
-	
-	# Simple rotation
-	var tween = create_tween()
-	tween.tween_property(canvas_background, "rotation", canvas_background.rotation + PI, 1.5)
-	canvas_background.pivot_offset = get_viewport().size / 2
-	
 	transition_colors(shop_colors)
+	
+	# Start opacity transition
+	var tween = create_tween()
+	tween.tween_method(update_transition_progress, 0.0, 1.0, 2.0)
+	tween.tween_callback(func(): is_transitioning = false)
+
 
 func exit_shop_mode():
 	if not is_shop_mode:
 		return
 	
 	is_shop_mode = false
-	movement_direction = 1.0
+	is_transitioning = true
+	transition_progress = 1.0
 	
+	# Reverse opacity transition
 	var tween = create_tween()
-	tween.tween_property(canvas_background, "rotation", canvas_background.rotation + PI, 1.5)
-	tween.tween_callback(set_3d_mode).set_delay(1.5)
+	tween.tween_method(update_transition_progress, 1.0, 0.0, 2.0)
+	tween.tween_callback(func(): 
+		is_transitioning = false
+		set_3d_mode()
+	)
 	
 	transition_colors(game_colors)
+
+func update_transition_progress(progress: float):
+	transition_progress = progress
+	
+	# Update opacity (0 = transparent, 1 = opaque)
+	current_opacity = progress
+	
+	# Update movement speed (slower as it gets more opaque)
+	var speed_multiplier = 1.0 - (progress * 0.8)  # Speed reduces to 20% of original
+	movement_speed = base_movement_speed * speed_multiplier
+	
+	# Reverse direction during transition
+	movement_direction = 1.0 - (progress * 2.0)  # Goes from 1 to -1
+	
+	# Update canvas opacity - use canvas_background instead of canvas_layer
+	if canvas_background:
+		canvas_background.modulate.a = current_opacity
+	
+	print("Transition progress: ", progress, " Speed: ", movement_speed, " Direction: ", movement_direction)
 
 func new_round_rotation():
 	# NO ROTATION - but this function exists for GameManager compatibility
@@ -423,16 +504,54 @@ func transition_colors(new_colors: Dictionary):
 	var start_colors = current_colors.duplicate()
 	var tween = create_tween()
 	
+	# Track if we're already transitioning to prevent multiple transitions
+	var is_transitioning = true
+	
 	var update_colors = func(progress: float):
+		if not is_transitioning:
+			return
+			
 		current_colors.primary = start_colors.primary.lerp(new_colors.primary, progress)
 		current_colors.secondary = start_colors.secondary.lerp(new_colors.secondary, progress)
-		generate_simple_lattice()
-		if background_material:
-			background_material.albedo_texture = background_texture
-		if canvas_background:
-			canvas_background.texture = background_texture
+		
+		# Only regenerate texture at key points, not every frame
+		if progress == 0.0 or progress >= 1.0 or int(progress * 10) % 3 == 0:
+			generate_simple_lattice()
+			
+			# Update 3D shader material
+			if background_material:
+				background_material.set_shader_parameter("lattice_texture", background_texture)
+			
+			# Update 2D shader material
+			if canvas_background and canvas_background.material:
+				var canvas_material = canvas_background.material as ShaderMaterial
+				canvas_material.set_shader_parameter("lattice_texture", background_texture)
 	
+	# Mark transition as complete when done
+	tween.tween_callback(func(): is_transitioning = false).set_delay(2.0)
 	tween.tween_method(update_colors, 0.0, 1.0, 2.0)
+
+func start_bite_transition():
+	print("🩸 Starting bite transition...")
+	if not is_shop_mode:
+		is_shop_mode = true
+		is_transitioning = true
+		transition_progress = 0.0
+		
+		set_2d_mode()
+		transition_colors(shop_colors)
+		
+		# Start slow transition that will complete when shop opens
+		var tween = create_tween()
+		tween.tween_method(update_transition_progress, 0.0, 0.5, 1.5)  # Only go halfway
+
+func complete_shop_transition():
+	print("🛒 Completing shop transition...")
+	if is_transitioning:
+		# Complete the remaining transition
+		var tween = create_tween()
+		tween.tween_method(update_transition_progress, transition_progress, 1.0, 1.0)
+		tween.tween_callback(func(): is_transitioning = false)
 
 func set_custom_colors(primary: Color, secondary: Color):
 	var custom_colors = {
