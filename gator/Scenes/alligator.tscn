@@ -1,7 +1,6 @@
-[gd_scene load_steps=8 format=3 uid="uid://b8a1vsh2qydig"]
+[gd_scene load_steps=7 format=3 uid="uid://b8a1vsh2qydig"]
 
 [ext_resource type="Script" uid="uid://dflsbiautig3x" path="res://Scripts/GameManager.gd" id="1_v0ff7"]
-[ext_resource type="PackedScene" uid="uid://celpi5eixnvlu" path="res://Scenes/MazeBackground.tscn" id="2_0i5w4"]
 [ext_resource type="PackedScene" uid="uid://c1xc2vs4locvu" path="res://Scenes/shop.tscn" id="2_6ohho"]
 [ext_resource type="PackedScene" uid="uid://qiletc3vogi" path="res://Scenes/game_ui.tscn" id="2_vc6s6"]
 [ext_resource type="PackedScene" uid="uid://dybwitfeuo8bc" path="res://Scenes/RoundTransition.tscn" id="3_6ohho"]
@@ -30,8 +29,3 @@ transform = Transform3D(-0.013043, 0.705446, -0.708644, 0.0331965, 0.708619, 0.7
 
 [node name="Alligator" parent="." instance=ExtResource("5_btjni")]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
-
-[node name="MazeBackground" parent="." instance=ExtResource("2_0i5w4")]
-transform = Transform3D(-4.37114e-08, 0.658689, 0.752415, 0, 0.752415, -0.658689, -1, -2.87922e-08, -3.28891e-08, 0, 0, 0)
-line_width = 5
-background_distance = 17.5

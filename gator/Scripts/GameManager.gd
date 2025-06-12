@@ -26,7 +26,6 @@ var modified_teeth: Dictionary = {} # For teeth with changed properties
 @onready var game_ui = $GameUI
 @onready var round_transition = $RoundTransition
 @onready var shop = $Shop
-@onready var maze_background = $MazeBackground
 
 func _ready():
 	# Connect signals from alligator
@@ -52,26 +51,6 @@ func start_level(level):
 	score = 0
 	current_round = 1
 	level_target_score = 100 * level
-	if maze_background:
-		match level:
-			1:
-				# Default colors (already set)
-				pass
-			2:
-				maze_background.set_custom_colors(
-					Color("#1a2810"), Color("#2a4818"), Color("#3a6820")  # Greener
-				)
-			3:
-				maze_background.set_custom_colors(
-					Color("#28101a"), Color("#481828"), Color("#682038")  # Redder
-				)
-			_:
-				# Procedural color generation for higher levels
-				var hue = (level * 0.2) % 1.0
-				var base_color = Color.from_hsv(hue, 0.6, 0.2)
-				var mid_color = Color.from_hsv(hue, 0.6, 0.3)
-				var accent_color = Color.from_hsv(hue, 0.6, 0.4)
-				maze_background.set_custom_colors(base_color, mid_color, accent_color)
 	
 	# Start the first round
 	start_new_round()
@@ -256,8 +235,6 @@ func _on_tooth_bit():
 	if is_bite_tooth:
 		print("💀 BIT! Tooth ", last_pressed, " was a bite tooth")
 		
-		if maze_background:
-			maze_background.start_bite_transition()
 		# Check if artifacts allow continuing after bite
 		var game_state = {
 			"bite_tooth": last_pressed,
@@ -509,8 +486,6 @@ func update_ui():
 
 func _on_continue_to_shop():
 	# Don't start transition here - it already started on bite
-	if maze_background:
-		maze_background.complete_shop_transition()  # Just complete the transition
 	if shop:
 		shop.open_shop(money)
 	else:
@@ -519,8 +494,6 @@ func _on_continue_to_shop():
 func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 	# Store the new tattoo mapping
 	current_tooth_tattoos = teeth_tattoo_mapping
-	if maze_background:
-		maze_background.exit_shop_mode()
 	print("=== SHOP CLOSED DEBUG ===")
 	print("Tattoo mapping received:")
 	for tooth_name in current_tooth_tattoos.keys():
@@ -541,8 +514,6 @@ func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 	
 	print("=== END SHOP DEBUG ===")
 	
-	if maze_background:
-		maze_background.exit_shop_mode()
 	
 	# Continue to next round
 	_proceed_to_next_round()
