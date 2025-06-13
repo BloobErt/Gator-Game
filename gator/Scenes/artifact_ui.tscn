@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3 uid="uid://cbaqcdd5l0jei"]
+
+[ext_resource type="Script" uid="uid://bdonqrfj00h5" path="res://Scripts/ArtifactUI.gd" id="1_hwkaf"]
+[ext_resource type="Script" uid="uid://b6h3ocywapt31" path="res://Scripts/SelectionOverlay.gd" id="2_2em7p"]
+
+[node name="ArtifactUI" type="CanvasLayer"]
+layer = 0
+script = ExtResource("1_hwkaf")
+
+[node name="ArtifactContainer" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SelectionOverlay" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("2_2em7p")
+
+[node name="Background" type="ColorRect" parent="SelectionOverlay"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="InstructionLabel" type="Label" parent="SelectionOverlay"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 48.0
+
+[node name="CancelButton" type="Button" parent="SelectionOverlay"]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0

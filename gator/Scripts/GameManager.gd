@@ -26,6 +26,7 @@ var modified_teeth: Dictionary = {} # For teeth with changed properties
 @onready var game_ui = $GameUI
 @onready var round_transition = $RoundTransition
 @onready var shop = $Shop
+@onready var artifact_ui = $ArtifactUI
 
 func _ready():
 	# Connect signals from alligator
@@ -44,6 +45,11 @@ func _ready():
 		shop.shop_closed.connect(_on_shop_closed)
 	else:
 		push_error("Shop reference is null! Add the Shop scene to your main scene.")
+	
+	if artifact_ui:
+		artifact_ui.artifact_used.connect(_on_artifact_used)
+		artifact_ui.selection_overlay.tooth_selected.connect(_on_tooth_selected_for_artifact)
+		artifact_ui.selection_overlay.selection_cancelled.connect(_on_artifact_selection_cancelled)
 
 func start_level(level):
 	
@@ -74,6 +80,9 @@ func start_new_round():
 	
 	# Update tooth visuals
 	alligator.update_tooth_visuals(teeth_values, teeth_multipliers)
+	
+	if artifact_ui:
+		artifact_ui.setup_artifacts(owned_artifacts)
 	
 	# Update UI
 	update_ui()
@@ -348,6 +357,34 @@ func add_artifact(artifact: ArtifactData):
 	
 	# Apply any persistent effects
 	apply_persistent_artifact_effects()
+	
+	# Update artifact UI
+	if artifact_ui:
+		artifact_ui.setup_artifacts(owned_artifacts)
+
+func _on_artifact_used(artifact_id: String, target_tooth: String):
+	print("Using artifact: ", artifact_id, " on target: ", target_tooth)
+	
+	var success = use_active_artifact(artifact_id, target_tooth)
+	
+	if success:
+		# Update the artifact UI to reflect used charges
+		if artifact_ui:
+			artifact_ui.update_artifact_displays()
+	
+	# Always end selection mode
+	if artifact_ui:
+		artifact_ui.end_tooth_selection()
+
+func _on_tooth_selected_for_artifact(tooth_name: String):
+	if artifact_ui and artifact_ui.selection_overlay.current_artifact:
+		var artifact = artifact_ui.selection_overlay.current_artifact
+		_on_artifact_used(artifact.id, tooth_name)
+
+# Handle cancelled artifact selection
+func _on_artifact_selection_cancelled():
+	if artifact_ui:
+		artifact_ui.end_tooth_selection()
 
 # Apply passive artifact effects to tooth presses
 func apply_artifact_effects_to_tooth(tooth_name: String, base_value: int, base_multiplier: float, game_state: Dictionary) -> Dictionary:
