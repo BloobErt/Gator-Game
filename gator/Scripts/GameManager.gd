@@ -84,6 +84,9 @@ func start_new_round():
 	if artifact_ui:
 		artifact_ui.setup_artifacts(owned_artifacts)
 	
+	if game_ui and game_ui.has_method("hide_end_round_button"):
+		game_ui.hide_end_round_button()
+	
 	# Update UI
 	update_ui()
 
@@ -102,6 +105,7 @@ func get_teeth_with_safe_tattoos() -> Array:
 	
 	return safe_teeth
 
+# Update your _on_tooth_pressed function in GameManager.gd
 func _on_tooth_pressed(tooth_name):
 	# Check if tooth is disabled
 	if tooth_name in disabled_teeth_next_round:
@@ -156,6 +160,7 @@ func _on_tooth_pressed(tooth_name):
 			all_persistent_effects.append_array(effect_result.persistent_effects)
 	
 	# Apply artifact effects
+	print("Applying artifact effects...")
 	var artifact_result = apply_artifact_effects_to_tooth(tooth_name, final_value, final_multiplier, game_state)
 	final_value = artifact_result.value
 	final_multiplier = artifact_result.multiplier
@@ -250,19 +255,25 @@ func _on_tooth_bit():
 			"round_score": round_score
 		}
 		
-		var can_continue = handle_bite_tooth_artifacts(game_state)
+		# Now we can await the coroutine
+		var can_continue = await handle_bite_tooth_artifacts(game_state)
 		
 		if can_continue:
 			print("✨ Artifact prevents bite ending the round!")
 			# Apply penalty but don't end round
 			var penalty = round(round_score * 0.05)
 			round_score -= penalty
+			
 			update_ui()
 		else:
 			# Normal bite behavior
 			var penalty = round(round_score * 0.05)
 			round_score -= penalty
 			end_round(true)
+
+func end_round_manually():
+	print("Round ended manually by player")
+	end_round(false)
 
 # Update the end_round function in GameManager.gd
 func end_round(bite_triggered = false):
@@ -386,7 +397,6 @@ func _on_artifact_selection_cancelled():
 	if artifact_ui:
 		artifact_ui.end_tooth_selection()
 
-# Apply passive artifact effects to tooth presses
 func apply_artifact_effects_to_tooth(tooth_name: String, base_value: int, base_multiplier: float, game_state: Dictionary) -> Dictionary:
 	var result = {
 		"value": base_value,
@@ -402,6 +412,10 @@ func apply_artifact_effects_to_tooth(tooth_name: String, base_value: int, base_m
 			result.multiplier = artifact_result.multiplier
 			result.special_effects.append_array(artifact_result.special_effects)
 			result.persistent_effects.append_array(artifact_result.persistent_effects)
+			
+			print("Applied artifact effect: ", artifact.name)
+			print("  Value: ", base_value, " -> ", result.value)
+			print("  Multiplier: ", base_multiplier, " -> ", result.multiplier)
 	
 	return result
 
@@ -415,16 +429,33 @@ func handle_bite_tooth_artifacts(game_state: Dictionary) -> bool:
 			
 			if trigger_result.can_continue:
 				can_continue = true
+				
+				# Show end round button when bite survivor is active
+				if game_ui and game_ui.has_method("show_end_round_button"):
+					game_ui.show_end_round_button()
+				
+				# Re-open the alligator mouth
+				if alligator and alligator.has_method("reopen_mouth_after_bite"):
+					alligator.reopen_mouth_after_bite()
+				elif alligator and alligator.has_method("open_mouth"):
+					await get_tree().create_timer(0.5).timeout
+					alligator.open_mouth()
 			
 			for effect in trigger_result.special_effects:
 				print("🎯 Artifact Trigger: ", effect)
 	
 	return can_continue
 
-# Use an active artifact on a specific tooth
 func use_active_artifact(artifact_id: String, target_tooth: String = "") -> bool:
+	print("=== USING ACTIVE ARTIFACT ===")
+	print("Artifact ID: ", artifact_id)
+	print("Target tooth: ", target_tooth)
+	
 	for artifact in owned_artifacts:
 		if artifact.id == artifact_id and artifact.is_active_artifact:
+			print("Found matching artifact: ", artifact.name)
+			print("Uses remaining: ", artifact.uses_remaining)
+			
 			var game_state = {
 				"tooth_tattoos": current_tooth_tattoos,
 				"current_round": current_round,
@@ -434,23 +465,29 @@ func use_active_artifact(artifact_id: String, target_tooth: String = "") -> bool
 			var result = artifact.apply_active_effect(target_tooth, game_state)
 			
 			if result.success:
+				print("✅ Artifact used successfully!")
+				
 				# Apply persistent effects
 				for effect in result.persistent_effects:
 					apply_artifact_persistent_effect(effect)
 				
 				# Show special effects
 				for effect in result.special_effects:
-					print("⚡ Active Artifact: ", effect)
+					print("⚡ Active Artifact Effect: ", effect)
 				
 				return true
 			else:
+				print("❌ Artifact failed to activate")
 				for effect in result.special_effects:
-					print("❌ Artifact Failed: ", effect)
+					print("❌ Failure reason: ", effect)
 	
+	print("❌ No matching active artifact found")
 	return false
 
 # Apply persistent effects from artifacts
 func apply_artifact_persistent_effect(effect: Dictionary):
+	print("Applying persistent artifact effect: ", effect.type)
+	
 	match effect.type:
 		"modify_tooth":
 			var tooth_name = effect.tooth_name
@@ -458,31 +495,103 @@ func apply_artifact_persistent_effect(effect: Dictionary):
 				"value_multiplier": effect.value_multiplier,
 				"max_tattoos": effect.max_tattoos
 			}
-			print("🔧 Modified tooth ", tooth_name)
+			print("🔧 Modified tooth ", tooth_name, " - Value: x", effect.value_multiplier, ", Max tattoos: ", effect.max_tattoos)
 		
 		"reveal_safe_teeth":
 			reveal_safe_teeth(effect.count)
 		
 		"set_max_rounds":
-			# This would modify game rules
 			print("⏰ Max rounds set to: ", effect.value)
 
 # Reveal safe teeth with visual indicators
 func reveal_safe_teeth(count: int):
-	var safe_teeth = get_teeth_with_safe_tattoos()
-	safe_teeth_revealed = safe_teeth.slice(0, min(count, safe_teeth.size()))
+	print("=== REVEAL SAFE TEETH DEBUG ===")
 	
-	# Create visual indicators (you'd implement this based on your UI system)
+	# Get safe teeth from tattoos
+	var safe_teeth_from_tattoos = get_teeth_with_safe_tattoos()
+	print("Safe teeth from tattoos: ", safe_teeth_from_tattoos)
+	
+	# Since there might not be any safe tattoos yet, let's also get some random teeth as "safe"
+	# This simulates what the artifact should do - reveal which teeth are safe
+	var all_tooth_names = ["ToothFrontLeft", "ToothFrontMidLeft", "ToothFrontMidRight", "ToothFrontRight", 
+						   "ToothDiagonalLeft", "ToothDiagonalRight",
+						   "ToothSideL1", "ToothSideL2", "ToothSideL3", "ToothSideL4", "ToothSideL5",
+						   "ToothSideR1", "ToothSideR2", "ToothSideR3", "ToothSideR4", "ToothSideR5"]
+	
+	# For the Oracle's Eye artifact, let's reveal which teeth are NOT the bite tooth
+	var revealed_safe_teeth = []
+	
+	# Add teeth with safe tattoos first
+	revealed_safe_teeth.append_array(safe_teeth_from_tattoos)
+	
+	# If we need more, add some non-bite teeth
+	while revealed_safe_teeth.size() < count and revealed_safe_teeth.size() < all_tooth_names.size():
+		for tooth_name in all_tooth_names:
+			if revealed_safe_teeth.size() >= count:
+				break
+			
+			# Don't reveal the main bite tooth or additional bite teeth
+			if tooth_name != alligator.bite_tooth_index and tooth_name not in additional_bite_teeth and tooth_name not in revealed_safe_teeth:
+				revealed_safe_teeth.append(tooth_name)
+	
+	safe_teeth_revealed = revealed_safe_teeth
+	print("Final revealed safe teeth: ", safe_teeth_revealed)
+	
+	# Create visual indicators
 	for tooth_name in safe_teeth_revealed:
 		create_safe_tooth_indicator(tooth_name)
 	
-	print("👁️ Revealed safe teeth: ", safe_teeth_revealed)
+	print("=== END REVEAL DEBUG ===")
 
 # Create visual indicator above safe tooth (placeholder)
 func create_safe_tooth_indicator(tooth_name: String):
-	# This would create an arrow or icon above the tooth
-	# Implementation depends on your 3D scene setup
 	print("Creating safe indicator for: ", tooth_name)
+	
+	# Get the tooth node
+	var tooth_node = alligator.get_node_or_null(tooth_name)
+	if not tooth_node:
+		print("❌ Could not find tooth node: ", tooth_name)
+		return
+	
+	# Remove any existing indicator first
+	var existing_indicator = tooth_node.get_node_or_null("SafeToothIndicator")
+	if existing_indicator:
+		existing_indicator.queue_free()
+	
+	# Create a simple 3D arrow or icon above the tooth
+	var indicator = create_arrow_indicator()
+	tooth_node.add_child(indicator)
+	
+	# Position above the tooth
+	indicator.position = Vector3(0, 1, 0)  # 1 unit above the tooth
+	
+	print("✅ Created visual indicator for safe tooth: ", tooth_name)
+
+func create_arrow_indicator() -> Node3D:
+	var arrow = MeshInstance3D.new()
+	arrow.name = "SafeToothIndicator"
+	
+	# Create a more visible cone mesh pointing down
+	var cone_mesh = SphereMesh.new()
+	cone_mesh.radius = 0.3
+	cone_mesh.height = 0.6
+	arrow.mesh = cone_mesh
+	
+	# Create a bright, glowing green material
+	var material = StandardMaterial3D.new()
+	material.albedo_color = Color.LIME_GREEN
+	material.emission_enabled = true
+	material.emission = Color.LIME_GREEN
+	material.emission_energy = 2.0  # Make it glow more
+	arrow.set_surface_override_material(0, material)
+	
+	# Add animation - makes it bob up and down
+	var tween = arrow.create_tween()
+	tween.set_loops()
+	tween.tween_property(arrow, "position:y", 1.5, 0.8)
+	tween.tween_property(arrow, "position:y", 1.0, 0.8)
+	
+	return arrow
 
 # Apply persistent artifact effects at round start
 func apply_persistent_artifact_effects():
@@ -505,7 +614,6 @@ func apply_persistent_artifact_effects():
 func apply_game_modification(modification: Dictionary):
 	match modification.type:
 		"set_max_rounds":
-			# You'd modify your round system here
 			print("Game modification: Max rounds = ", modification.value)
 
 func update_ui():

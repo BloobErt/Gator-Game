@@ -264,6 +264,17 @@ func _trigger_bite_animation():
 			animation_player.play("Chomp")
 		mouth_open = false
 
+func reopen_mouth_after_bite():
+	print("Reopening mouth after bite survivor artifact triggered")
+	
+	# Wait a moment for the bite animation to finish
+	await get_tree().create_timer(1.0).timeout
+	
+	# Then open the mouth again
+	open_mouth()
+	
+	print("Mouth reopened - ready for more teeth!")
+
 func open_mouth():
 	if mouth_open:
 		return  # Already open

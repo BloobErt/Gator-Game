@@ -153,3 +153,8 @@ text = "Total:"
 [node name="TotalScoreValue" type="Label" parent="MarginContainer3/TotalScore"]
 layout_mode = 2
 text = "0"
+
+[node name="EndRoundButton" type="Button" parent="."]
+offset_right = 8.0
+offset_bottom = 8.0
+text = "End          Round"
