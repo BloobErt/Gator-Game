@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://b8a1vsh2qydig"]
+[gd_scene load_steps=50 format=3 uid="uid://b8a1vsh2qydig"]
 
 [ext_resource type="Script" uid="uid://dflsbiautig3x" path="res://Scripts/GameManager.gd" id="1_v0ff7"]
 [ext_resource type="PackedScene" uid="uid://c1xc2vs4locvu" path="res://Scenes/shop.tscn" id="2_6ohho"]
@@ -7,16 +7,228 @@
 [ext_resource type="PackedScene" uid="uid://dybwitfeuo8bc" path="res://Scenes/RoundTransition.tscn" id="3_6ohho"]
 [ext_resource type="Script" uid="uid://blpl7rdu1exwl" path="res://Scripts/TeethClickDetector.gd" id="4_0i5w4"]
 [ext_resource type="PackedScene" uid="uid://1yrva4up37ii" path="res://Scenes/AlligatorBetter.tscn" id="5_btjni"]
+[ext_resource type="Texture2D" uid="uid://dn7ug31lcpkqu" path="res://Assets/ingame1.png" id="7_0i5w4"]
+[ext_resource type="Texture2D" uid="uid://dapjvbyq4esfq" path="res://Assets/ingame6.png" id="7_r6lpp"]
+[ext_resource type="Texture2D" uid="uid://dtovsccihgxan" path="res://Assets/ingame2.png" id="9_8wk32"]
+[ext_resource type="Texture2D" uid="uid://cj288er6dfyxr" path="res://Assets/ingame3.png" id="10_rpk1n"]
+[ext_resource type="Texture2D" uid="uid://0flkonnkln63" path="res://Assets/ingame4.png" id="11_ghibi"]
+[ext_resource type="Texture2D" uid="uid://cd6actmq4q0kd" path="res://Assets/ingame5.png" id="12_xu5fr"]
+[ext_resource type="Texture2D" uid="uid://cd6g7snujub7t" path="res://Assets/Trans5.png" id="13_lb6v4"]
+[ext_resource type="Texture2D" uid="uid://bnkguym0e3tk" path="res://Assets/Trans4.png" id="14_gbxpd"]
+[ext_resource type="Texture2D" uid="uid://3k54fejnn8qa" path="res://Assets/Trans3.png" id="15_mn22s"]
+[ext_resource type="Texture2D" uid="uid://d3rb7kuiu28hr" path="res://Assets/Trans2.png" id="16_i8g61"]
+[ext_resource type="Texture2D" uid="uid://b3212hai6k53e" path="res://Assets/Trans1.png" id="17_rg1vc"]
+[ext_resource type="Texture2D" uid="uid://co3droh0duuq7" path="res://Assets/shop1.png" id="18_xuti8"]
+[ext_resource type="Texture2D" uid="uid://i88qrxqr5bna" path="res://Assets/shop2.png" id="19_ghw47"]
+[ext_resource type="Texture2D" uid="uid://c4h8w2m3b2f2q" path="res://Assets/shop3.png" id="20_e5sr0"]
+[ext_resource type="Texture2D" uid="uid://yd65d5pt2dey" path="res://Assets/shop4.png" id="21_dldbw"]
+[ext_resource type="Texture2D" uid="uid://bnyap3no4huem" path="res://Assets/shop5.png" id="22_1hncw"]
+[ext_resource type="Texture2D" uid="uid://rks3y0lg5q2t" path="res://Assets/shop6.png" id="23_flswn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gbxpd"]
+shading_mode = 0
+albedo_texture = ExtResource("7_0i5w4")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_btjni"]
+shading_mode = 0
+albedo_texture = ExtResource("7_0i5w4")
+
+[sub_resource type="QuadMesh" id="QuadMesh_0bgm5"]
+material = SubResource("StandardMaterial3D_btjni")
+size = Vector2(3.2, 1.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mn22s"]
+shading_mode = 0
+albedo_texture = ExtResource("9_8wk32")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i8g61"]
+shading_mode = 0
+albedo_texture = ExtResource("10_rpk1n")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rg1vc"]
+shading_mode = 0
+albedo_texture = ExtResource("11_ghibi")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_40j4d"]
+shading_mode = 0
+albedo_texture = ExtResource("12_xu5fr")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lb6v4"]
+shading_mode = 0
+albedo_texture = ExtResource("7_r6lpp")
+
+[sub_resource type="Animation" id="Animation_xuti8"]
+resource_name = "game_loop_3d"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:material_overlay")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.166667, 0.333333, 0.5, 0.666667, 0.833333),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [SubResource("StandardMaterial3D_gbxpd"), SubResource("StandardMaterial3D_mn22s"), SubResource("StandardMaterial3D_i8g61"), SubResource("StandardMaterial3D_rg1vc"), SubResource("StandardMaterial3D_40j4d"), SubResource("StandardMaterial3D_lb6v4")]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../..")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(1),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"emit_3d_frame_sync"
+}]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ghw47"]
+_data = {
+&"game_loop_3d": SubResource("Animation_xuti8")
+}
+
+[sub_resource type="Animation" id="Animation_e5sr0"]
+resource_name = "game_loop"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.166667, 0.333333, 0.5, 0.666667, 0.833333),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [ExtResource("7_0i5w4"), ExtResource("9_8wk32"), ExtResource("10_rpk1n"), ExtResource("11_ghibi"), ExtResource("12_xu5fr"), ExtResource("7_r6lpp")]
+}
+
+[sub_resource type="Animation" id="Animation_dldbw"]
+resource_name = "shop_loop"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.166667, 0.333333, 0.5, 0.666667, 0.833333),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [ExtResource("18_xuti8"), ExtResource("19_ghw47"), ExtResource("20_e5sr0"), ExtResource("21_dldbw"), ExtResource("22_1hncw"), ExtResource("23_flswn")]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../../..")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(1),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"emit_shop_loop_sync"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_1hncw"]
+resource_name = "transition_to_game"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.166667, 0.333333, 0.5, 0.666667),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [ExtResource("13_lb6v4"), ExtResource("14_gbxpd"), ExtResource("15_mn22s"), ExtResource("16_i8g61"), ExtResource("17_rg1vc")]
+}
+
+[sub_resource type="Animation" id="Animation_flswn"]
+resource_name = "transition_to_shop"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.166667, 0.333333, 0.5, 0.666667),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [ExtResource("17_rg1vc"), ExtResource("16_i8g61"), ExtResource("15_mn22s"), ExtResource("14_gbxpd"), ExtResource("13_lb6v4")]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ugce8"]
+_data = {
+&"game_loop": SubResource("Animation_e5sr0"),
+&"shop_loop": SubResource("Animation_dldbw"),
+&"transition_to_game": SubResource("Animation_1hncw"),
+&"transition_to_shop": SubResource("Animation_flswn")
+}
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_u8alt"]
+animation = &"game_loop"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_w5fp6"]
+animation = &"shop_loop"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_nwgom"]
+animation = &"transition_to_game"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_l723h"]
+animation = &"transition_to_shop"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5tnkh"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_potwk"]
+switch_mode = 2
+advance_mode = 0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_kmcnp"]
+advance_mode = 0
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_12ih0"]
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_xuti8"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_u8alt"]
+allow_transition_to_self = true
+states/End/position = Vector2(840, 181)
+states/Start/position = Vector2(125, 115)
+states/game_loop/node = SubResource("AnimationNodeAnimation_u8alt")
+states/game_loop/position = Vector2(372, 310)
+states/shop_loop/node = SubResource("AnimationNodeAnimation_w5fp6")
+states/shop_loop/position = Vector2(372, 181)
+states/transition_to_game/node = SubResource("AnimationNodeAnimation_nwgom")
+states/transition_to_game/position = Vector2(607, 310)
+states/transition_to_shop/node = SubResource("AnimationNodeAnimation_l723h")
+states/transition_to_shop/position = Vector2(607, 181)
+transitions = ["game_loop", "transition_to_shop", SubResource("AnimationNodeStateMachineTransition_5tnkh"), "transition_to_shop", "shop_loop", SubResource("AnimationNodeStateMachineTransition_potwk"), "shop_loop", "transition_to_game", SubResource("AnimationNodeStateMachineTransition_kmcnp"), "transition_to_game", "game_loop", SubResource("AnimationNodeStateMachineTransition_12ih0"), "Start", "game_loop", SubResource("AnimationNodeStateMachineTransition_xuti8")]
+graph_offset = Vector2(-118, 72)
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_v0ff7")
 
 [node name="GameUI" parent="." instance=ExtResource("2_vc6s6")]
-layer = -1
+layer = -2
 
 [node name="ArtifactUI" parent="." instance=ExtResource("3_0i5w4")]
 
 [node name="RoundTransition" parent="." instance=ExtResource("3_6ohho")]
+visible = false
 
 [node name="Shop" parent="." instance=ExtResource("2_6ohho")]
 layer = 2
@@ -24,7 +236,40 @@ visible = false
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-3.28695e-08, 0.659201, -0.751966, 2.88146e-08, 0.751966, 0.659201, 1, 8.88178e-15, -4.37114e-08, -0.552615, 0.361187, 0)
+fov = 90.0
 script = ExtResource("4_0i5w4")
+
+[node name="dBackground" type="MeshInstance3D" parent="Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.9)
+material_overlay = SubResource("StandardMaterial3D_gbxpd")
+mesh = SubResource("QuadMesh_0bgm5")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Camera3D/dBackground"]
+libraries = {
+&"": SubResource("AnimationLibrary_ghw47")
+}
+
+[node name="Background" type="CanvasLayer" parent="Camera3D"]
+layer = -1
+
+[node name="TextureRect" type="TextureRect" parent="Camera3D/Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("22_1hncw")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Camera3D/Background"]
+root_node = NodePath("../TextureRect")
+libraries = {
+&"": SubResource("AnimationLibrary_ugce8")
+}
+
+[node name="AnimationTree" type="AnimationTree" parent="Camera3D/Background"]
+root_node = NodePath("../TextureRect")
+tree_root = SubResource("AnimationNodeStateMachine_u8alt")
+anim_player = NodePath("../AnimationPlayer")
 
 [node name="Lights" type="Node3D" parent="."]
 
@@ -33,3 +278,5 @@ transform = Transform3D(-0.013043, 0.705446, -0.708644, 0.0331965, 0.708619, 0.7
 
 [node name="Alligator" parent="." instance=ExtResource("5_btjni")]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+
+[connection signal="animation_finished" from="Camera3D/Background/AnimationTree" to="." method="_on_animation_tree_animation_finished"]

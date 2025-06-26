@@ -8,6 +8,13 @@ var round_score = 0
 var level_target_score = 100  # Increases with each level
 var money = 0
 
+signal background_frame_sync
+signal shop_loop_sync
+signal transition_ready
+var waiting_for_transition = false
+var waiting_for_shop_exit = false
+var in_shop_mode = false
+
 # Teeth values
 var teeth_values = {}
 var teeth_multipliers = {}
@@ -32,6 +39,15 @@ func _ready():
 	# Connect signals from alligator
 	alligator.tooth_pressed.connect(_on_tooth_pressed)
 	alligator.tooth_bit.connect(_on_tooth_bit)
+	$Camera3D/dBackground/AnimationPlayer.play("game_loop_3d")
+	$Camera3D/Background/TextureRect.modulate.a = 0.0  # Transparent
+	var anim_tree = $Camera3D/Background/AnimationTree
+	anim_tree.active = true
+	var playback = anim_tree.get("parameters/playback")
+	playback.travel("game_loop")
+	background_frame_sync.connect(_on_background_sync)
+	shop_loop_sync.connect(_on_shop_sync)
+	
 	 # Connect transition signal if it exists
 	if round_transition:
 		if not round_transition.is_connected("continue_pressed", _on_continue_to_shop):
@@ -45,7 +61,6 @@ func _ready():
 		shop.shop_closed.connect(_on_shop_closed)
 	else:
 		push_error("Shop reference is null! Add the Shop scene to your main scene.")
-	
 	if artifact_ui:
 		artifact_ui.artifact_used.connect(_on_artifact_used)
 		artifact_ui.selection_overlay.tooth_selected.connect(_on_tooth_selected_for_artifact)
@@ -271,6 +286,24 @@ func _on_tooth_bit():
 			round_score -= penalty
 			end_round(true)
 
+func _on_background_sync():
+	print("=== BACKGROUND SYNC TRIGGERED ===")
+	print("waiting_for_transition: ", waiting_for_transition)
+	
+	if waiting_for_transition:
+		print("Starting shop transition...")
+		in_shop_mode = true
+		start_shop_transition()
+		waiting_for_transition = false
+	else:
+		print("Normal sync - starting 2D game loop")
+		sync_2d_game_loop()
+
+func sync_2d_game_loop():
+	var anim_tree = $Camera3D/Background/AnimationTree
+	var playback = anim_tree.get("parameters/playback")
+	playback.travel("game_loop")
+
 func end_round_manually():
 	print("Round ended manually by player")
 	end_round(false)
@@ -279,12 +312,13 @@ func end_round_manually():
 func end_round(bite_triggered = false):
 	# Add round score to total score
 	score += round_score
-	
 	# Award money based on round performance
 	var money_earned = round_score / 10  # Simple conversion
 	money += money_earned
-	
-	
+	var bg_2d = $Camera3D/Background/TextureRect
+	var tween = create_tween()
+	tween.tween_property($Camera3D/Background/TextureRect, "modulate:a", 1.0, 0.1)
+	waiting_for_transition = true
 	# Store the result values for the transition screen
 	var final_round_score = round_score
 	
@@ -301,6 +335,14 @@ func end_round(bite_triggered = false):
 			shop.open_shop(money)
 		else:
 			_proceed_to_next_round()
+
+func start_shop_transition():
+	# Pause 3D background
+	$Camera3D/dBackground/AnimationPlayer.pause()
+	
+	var anim_tree = $Camera3D/Background/AnimationTree
+	var playback = anim_tree.get("parameters/playback")
+	playback.travel("transition_to_shop")
 
 func _proceed_to_next_round():
 	# Check if we've reached the target score
@@ -646,7 +688,7 @@ func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 		for i in range(current_tooth_tattoos[tooth_name].size()):
 			var tattoo = current_tooth_tattoos[tooth_name][i]
 			print("  - ", tattoo.name, " (ID: ", tattoo.id, ", Type: ", tattoo.effect_type, ")")
-	
+	$Camera3D/dBackground/AnimationPlayer.play()
 	# Add only newly purchased artifacts to the game
 	print("Processing ", newly_purchased_artifacts.size(), " newly purchased artifacts...")
 	for artifact in newly_purchased_artifacts:
@@ -658,7 +700,56 @@ func _on_shop_closed(teeth_tattoo_mapping, newly_purchased_artifacts):
 		print("- ", artifact.name, " (Type: ", artifact.effect_type, ")")
 	
 	print("=== END SHOP DEBUG ===")
-	
-	
+	in_shop_mode = false
+	waiting_for_shop_exit = true
 	# Continue to next round
 	_proceed_to_next_round()
+
+func _on_shop_sync():
+	if waiting_for_shop_exit:
+		# Start transition back to game
+		var anim_tree = $Camera3D/Background/AnimationTree
+		var playback = anim_tree.get("parameters/playback")
+		playback.travel("transition_to_game")
+		waiting_for_shop_exit = false
+
+func _input(event):
+	if event.is_action_pressed("Test"):
+		var bg_2d = $Camera3D/Background/TextureRect
+		bg_2d.modulate.a = 1.0
+		
+		var anim_tree = $Camera3D/Background/AnimationTree
+		anim_tree.active = true
+		
+		# Get the playback object and use travel()
+		var playback = anim_tree.get("parameters/playback")
+		playback.travel("game_loop")
+		
+		await get_tree().process_frame
+		print("Current state: ", playback.get_current_node())
+
+func emit_3d_frame_sync():
+	emit_signal("background_frame_sync")
+
+func emit_shop_loop_sync():
+	emit_signal("shop_loop_sync")
+
+func _on_animation_tree_animation_finished(anim_name: StringName):
+	print("=== ANIMATION FINISHED ===")
+	print("Animation name: ", anim_name)
+	
+	var anim_tree = $Camera3D/Background/AnimationTree
+	var playback = anim_tree.get("parameters/playback")
+	print("Current state: ", playback.get_current_node())
+	
+	if anim_name == "transition_to_shop":
+		print("Transition to shop finished - manually traveling to shop_loop")
+		playback.travel("shop_loop")
+		
+		await get_tree().process_frame
+		print("State after manual travel: ", playback.get_current_node())
+		
+	elif anim_name == "transition_to_game":
+		print("Transition to game finished - hiding 2D background")
+		var tween = create_tween()
+		tween.tween_property($Camera3D/Background/TextureRect, "modulate:a", 0.0, 0.2)
