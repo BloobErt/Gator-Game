@@ -1,12 +1,14 @@
-# Create a new script: ArtifactUI.gd
+# ArtifactUI.gd - Updated for side layout
 extends CanvasLayer
 
 signal artifact_used(artifact_id, target_tooth)
 
 var active_artifacts: Array[ArtifactData] = []
-var artifact_buttons: Array[Button] = []
+var artifact_icons: Array[Control] = []
 
-@onready var artifact_container = $ArtifactContainer
+# Update these to match your new scene structure
+@onready var left_side_container = $LeftSideContainer
+@onready var right_side_container = $RightSideContainer
 @onready var selection_overlay = $SelectionOverlay
 
 func _ready():
@@ -19,79 +21,127 @@ func _ready():
 
 # Called by GameManager when artifacts are added
 func setup_artifacts(artifacts: Array[ArtifactData]):
-	active_artifacts = artifacts
-	create_artifact_buttons()
-
-func create_artifact_buttons():
-	# Clear existing buttons
-	for button in artifact_buttons:
-		if is_instance_valid(button):
-			button.queue_free()
-	artifact_buttons.clear()
+	print("=== SETTING UP ARTIFACTS ===")
+	print("Number of artifacts received: ", artifacts.size())
+	for i in range(artifacts.size()):
+		print("Artifact ", i, ": ", artifacts[i].name, " | Texture: ", artifacts[i].icon_texture)
 	
-	# Create buttons for active artifacts
+	active_artifacts = artifacts
+	create_artifact_icons()
+
+func create_artifact_icons():
+	# Clear existing icons
+	for icon in artifact_icons:
+		if is_instance_valid(icon):
+			icon.queue_free()
+	artifact_icons.clear()
+	
+	# Create icons for all owned artifacts (not just active ones)
 	for i in range(active_artifacts.size()):
 		var artifact = active_artifacts[i]
-		if artifact.is_active_artifact and artifact.uses_remaining != 0:
-			create_artifact_button(artifact, i)
+		create_artifact_icon(artifact, i)
 
-func create_artifact_button(artifact: ArtifactData, index: int):
-	var button = Button.new()
-	button.text = artifact.name
-	button.custom_minimum_size = Vector2(120, 40)
+func create_artifact_icon(artifact: ArtifactData, index: int):
+	print("Creating icon for artifact: ", artifact.name)
+	print("Artifact icon_texture: ", artifact.icon_texture)
 	
-	# Position buttons horizontally at the bottom
-	button.position = Vector2(10 + (index * 130), get_viewport().size.y - 60)
-	button.anchor_top = 1.0
-	button.anchor_bottom = 1.0
-	button.offset_top = -60
-	button.offset_bottom = -20
+	# Create the icon container
+	var icon_container = Control.new()
+	icon_container.custom_minimum_size = Vector2(80, 80)
+	icon_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	
-	# Style the button based on artifact rarity
-	style_artifact_button(button, artifact)
+	# Create the texture rect for the artifact icon
+	var texture_rect = TextureRect.new()
+	texture_rect.texture = artifact.icon_texture
+	texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	# Instead of using anchors, set explicit size and position
+	texture_rect.position = Vector2(5, 5)
+	texture_rect.size = Vector2(70, 55)  # Leave space for uses label at bottom
 	
-	# Connect signal
-	button.pressed.connect(_on_artifact_button_pressed.bind(artifact))
+	print("TextureRect created with texture: ", texture_rect.texture)
+	print("TextureRect size: ", texture_rect.size)
 	
-	# Add to container
-	artifact_container.add_child(button)
-	artifact_buttons.append(button)
+	# Add background/border based on rarity (simplified)
+	var background = Panel.new()
+	# Set explicit size instead of anchors
+	background.position = Vector2(0, 0)
+	background.size = Vector2(80, 80)
+	style_artifact_background(background, artifact)
+	
+	icon_container.add_child(background)
+	icon_container.add_child(texture_rect)
+	
+	# Add uses label if it's an active artifact
+	if artifact.is_active_artifact and artifact.uses_remaining > 0:
+		var uses_label = Label.new()
+		uses_label.text = str(artifact.uses_remaining)
+		# Set explicit position instead of anchors
+		uses_label.position = Vector2(5, 60)
+		uses_label.size = Vector2(70, 20)
+		uses_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		uses_label.add_theme_color_override("font_color", Color.WHITE)
+		uses_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+		uses_label.add_theme_constant_override("shadow_offset_x", 1)
+		uses_label.add_theme_constant_override("shadow_offset_y", 1)
+		icon_container.add_child(uses_label)
+		
+		# Make it clickable for active artifacts
+		icon_container.gui_input.connect(_on_artifact_icon_input.bind(artifact))
 	
 	# Add tooltip
-	button.tooltip_text = artifact.description + "\nUses: " + str(artifact.uses_remaining)
+	var tooltip_text = artifact.name + "\n" + artifact.description
+	if artifact.is_active_artifact and artifact.uses_remaining > 0:
+		tooltip_text += "\nUses: " + str(artifact.uses_remaining) + "\nClick to use"
+	icon_container.tooltip_text = tooltip_text
+	
+	# Decide which side to place it on (alternate left/right)
+	var target_container = left_side_container if (index % 2 == 0) else right_side_container
+	target_container.add_child(icon_container)
+	artifact_icons.append(icon_container)
+	
+	print("Added artifact icon to container. Total icons: ", artifact_icons.size())
 
-func style_artifact_button(button: Button, artifact: ArtifactData):
+func style_artifact_background(panel: Panel, artifact: ArtifactData):
+	# Create a simple colored background based on rarity
 	var style = StyleBoxFlat.new()
 	
 	# Color based on rarity
 	match artifact.rarity:
 		"common":
-			style.bg_color = Color.GRAY
+			style.bg_color = Color(0.5, 0.5, 0.5, 0.8)  # Gray
 		"rare":
-			style.bg_color = Color.BLUE
+			style.bg_color = Color(0.2, 0.4, 0.8, 0.8)  # Blue
 		"epic":
-			style.bg_color = Color.PURPLE
+			style.bg_color = Color(0.6, 0.2, 0.8, 0.8)  # Purple
 		"legendary":
-			style.bg_color = Color.GOLD
+			style.bg_color = Color(0.8, 0.6, 0.2, 0.8)  # Gold
 		_:
-			style.bg_color = Color.WHITE
+			style.bg_color = Color(0.3, 0.3, 0.3, 0.8)  # Default gray
 	
-	style.corner_radius_top_left = 5
-	style.corner_radius_top_right = 5
-	style.corner_radius_bottom_left = 5
-	style.corner_radius_bottom_right = 5
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color.WHITE
 	
-	button.add_theme_stylebox_override("normal", style)
+	# Apply the style directly to the panel
+	panel.add_theme_stylebox_override("panel", style)
 
-func _on_artifact_button_pressed(artifact: ArtifactData):
-	print("Artifact button pressed: ", artifact.name)
-	
-	# Check if this artifact needs target selection
-	if needs_target_selection(artifact):
-		start_tooth_selection(artifact)
-	else:
-		# Use artifact without target
-		emit_signal("artifact_used", artifact.id, "")
+func _on_artifact_icon_input(event: InputEvent, artifact: ArtifactData):
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("Artifact icon clicked: ", artifact.name)
+		
+		# Check if this artifact needs target selection
+		if needs_target_selection(artifact):
+			start_tooth_selection(artifact)
+		else:
+			# Use artifact without target
+			emit_signal("artifact_used", artifact.id, "")
 
 func needs_target_selection(artifact: ArtifactData) -> bool:
 	# Return true for artifacts that need to target a specific tooth
@@ -124,15 +174,7 @@ func remove_tooth_highlights():
 	# Remove any tooth highlighting
 	print("Removing tooth highlights")
 
-# Update button states when artifacts are used
+# Update icon states when artifacts are used
 func update_artifact_displays():
-	for i in range(artifact_buttons.size()):
-		if i < active_artifacts.size():
-			var artifact = active_artifacts[i]
-			var button = artifact_buttons[i]
-			
-			if artifact.uses_remaining <= 0:
-				button.disabled = true
-				button.text = artifact.name + " (Exhausted)"
-			else:
-				button.tooltip_text = artifact.description + "\nUses: " + str(artifact.uses_remaining)
+	# Recreate all icons to reflect current state
+	create_artifact_icons()

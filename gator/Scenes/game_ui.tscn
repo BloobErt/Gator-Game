@@ -157,4 +157,5 @@ text = "0"
 [node name="EndRoundButton" type="Button" parent="."]
 offset_right = 8.0
 offset_bottom = 8.0
+button_mask = 7
 text = "End          Round"
