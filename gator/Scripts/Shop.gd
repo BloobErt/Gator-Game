@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 signal shop_closed(teeth_tattoo_mapping, purchased_artifacts_list)
+signal tooth_selected_for_artifact(slot_index)
 
 var available_tattoos: Array[TattooData] = []
 var available_artifacts: Array[ArtifactData] = []
@@ -8,6 +9,8 @@ var player_money: int = 0
 var teeth_slots: Array = []  # Array of ToothSlot nodes
 var purchased_artifacts: Array[ArtifactData] = []
 var newly_purchased_artifacts: Array[ArtifactData] = []
+var artifact_selection_mode = false
+var current_artifact_for_selection: ArtifactData = null
 
 @onready var money_label = $ShopContainer/MoneyDisplay/MoneyLabel
 @onready var tattoo_slots = [$ShopContainer/TattooSection/TattooContainer/TattooSlot1,
@@ -605,6 +608,156 @@ func open_drawer():
 		slam_teeth_to_front()
 	await tween.finished
 	drawer_busy = false
+
+func test_artifact_connection():
+	print("Shop received artifact test call!")
+	open_drawer()
+
+func open_drawer_for_artifact_selection(artifact: ArtifactData):
+	print("Opening drawer for artifact selection: ", artifact.name)
+	
+	artifact_selection_mode = true
+	current_artifact_for_selection = artifact
+	
+	# IMPORTANT: Make shop visible during artifact selection
+	visible = true
+	
+	# Show instruction overlay or modify UI to indicate selection mode
+	show_artifact_selection_instructions(artifact)
+	
+	# Open the drawer
+	open_drawer()
+	
+	# Connect teeth for artifact selection
+	connect_teeth_for_artifact_selection()
+
+func show_artifact_selection_instructions(artifact: ArtifactData):
+	# You could add a temporary instruction label here
+	print("Select a tooth to use ", artifact.name, " on")
+	
+	# Optionally show which teeth are valid targets
+	match artifact.id:
+		"tooth_modifier":
+			print("Select a tooth with no tattoos")
+
+func connect_teeth_for_artifact_selection():
+	# Connect to existing tooth slots for artifact selection
+	for i in range(teeth_slots.size()):
+		var tooth = teeth_slots[i]
+		if tooth and tooth.has_method("setup_for_artifact_selection"):
+			tooth.setup_for_artifact_selection(i, self)
+		else:
+			# Fallback: connect to existing signals or input events
+			setup_tooth_for_artifact_click(tooth, i)
+
+func setup_tooth_for_artifact_click(tooth, slot_index: int):
+	# Add a click handler to the tooth for artifact selection
+	print("Setting up tooth ", slot_index, " for artifact clicks")
+	print("Tooth type: ", tooth.get_class())
+	
+	if tooth:
+		# Check if it's a RigidBody2D (physics tooth)
+		if tooth is RigidBody2D and tooth.has_signal("input_event"):
+			if not tooth.is_connected("input_event", _on_tooth_input_event_for_artifact):
+				tooth.input_event.connect(_on_tooth_input_event_for_artifact.bind(slot_index))
+				print("Connected RigidBody2D tooth ", slot_index, " input_event signal")
+		
+		# Check for ToothDropArea child (Control node)
+		var drop_area = tooth.get_node_or_null("DropArea")
+		if drop_area and drop_area.has_signal("gui_input"):
+			if not drop_area.is_connected("gui_input", _on_tooth_drop_area_clicked_for_artifact):
+				drop_area.gui_input.connect(_on_tooth_drop_area_clicked_for_artifact.bind(slot_index))
+				print("Connected DropArea ", slot_index, " gui_input signal")
+		
+		# Fallback: try gui_input on the tooth itself
+		elif tooth.has_signal("gui_input"):
+			if not tooth.is_connected("gui_input", _on_tooth_gui_input_for_artifact):
+				tooth.gui_input.connect(_on_tooth_gui_input_for_artifact.bind(slot_index))
+				print("Connected tooth ", slot_index, " gui_input signal")
+		else:
+			print("WARNING: Tooth ", slot_index, " has no usable input signals")
+
+func _on_tooth_drop_area_clicked_for_artifact(event: InputEvent, slot_index: int):
+	print("Drop area clicked for artifact selection, slot: ", slot_index)
+	print("Artifact selection mode: ", artifact_selection_mode)
+	
+	if not artifact_selection_mode:
+		return
+		
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("Valid drop area click for slot ", slot_index)
+		
+		if is_valid_tooth_for_artifact(slot_index):
+			print("Valid tooth selected: ", slot_index)
+			emit_signal("tooth_selected_for_artifact", slot_index)
+			exit_artifact_selection_mode()
+		else:
+			print("Invalid tooth for artifact")
+
+func _on_tooth_gui_input_for_artifact(event: InputEvent, slot_index: int):
+	print("GUI input for artifact selection, slot: ", slot_index)
+	
+	if not artifact_selection_mode:
+		return
+		
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if is_valid_tooth_for_artifact(slot_index):
+			emit_signal("tooth_selected_for_artifact", slot_index)
+			exit_artifact_selection_mode()
+
+func _on_tooth_input_event_for_artifact(camera, event, position, normal, shape_idx, slot_index: int):
+	if not artifact_selection_mode:
+		return
+		
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("Physics tooth slot ", slot_index, " clicked for artifact")
+		
+		# Check if this tooth is valid for the current artifact
+		if is_valid_tooth_for_artifact(slot_index):
+			emit_signal("tooth_selected_for_artifact", slot_index)
+			exit_artifact_selection_mode()
+		else:
+			print("Invalid tooth for artifact ", current_artifact_for_selection.name)
+
+func _on_tooth_clicked_for_artifact(event: InputEvent, slot_index: int):
+	if not artifact_selection_mode:
+		return
+		
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("Tooth slot ", slot_index, " clicked for artifact")
+		
+		# Check if this tooth is valid for the current artifact
+		if is_valid_tooth_for_artifact(slot_index):
+			emit_signal("tooth_selected_for_artifact", slot_index)
+			exit_artifact_selection_mode()
+		else:
+			print("Invalid tooth for artifact ", current_artifact_for_selection.name)
+
+func is_valid_tooth_for_artifact(slot_index: int) -> bool:
+	if not current_artifact_for_selection:
+		return false
+	
+	match current_artifact_for_selection.id:
+		"tooth_modifier":
+			# Tooth Eater can only be used on teeth with no tattoos
+			if slot_index < teeth_slots.size():
+				var tooth = teeth_slots[slot_index]
+				return tooth.applied_tattoos.size() == 0
+			else:
+				return false
+		_:
+			return true
+
+func exit_artifact_selection_mode():
+	artifact_selection_mode = false
+	current_artifact_for_selection = null
+	close_drawer()
+	
+	# Hide shop again after artifact selection
+	visible = false
+
+func get_teeth_slots() -> Array:
+	return teeth_slots
 
 func recreate_all_teeth():
 	print("Recreating all teeth...")

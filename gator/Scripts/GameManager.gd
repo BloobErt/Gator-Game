@@ -287,16 +287,12 @@ func _on_tooth_bit():
 			end_round(true)
 
 func _on_background_sync():
-	print("=== BACKGROUND SYNC TRIGGERED ===")
-	print("waiting_for_transition: ", waiting_for_transition)
 	
 	if waiting_for_transition:
-		print("Starting shop transition...")
 		in_shop_mode = true
 		start_shop_transition()
 		waiting_for_transition = false
 	else:
-		print("Normal sync - starting 2D game loop")
 		sync_2d_game_loop()
 
 func sync_2d_game_loop():

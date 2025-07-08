@@ -1,15 +1,19 @@
-# ArtifactUI.gd - Updated for side layout
+# ArtifactUI.gd - Updated for drawer-based tooth selection
 extends CanvasLayer
 
 signal artifact_used(artifact_id, target_tooth)
 
 var active_artifacts: Array[ArtifactData] = []
 var artifact_icons: Array[Control] = []
+var current_selection_artifact: ArtifactData = null
 
 # Update these to match your new scene structure
 @onready var left_side_container = $LeftSideContainer
 @onready var right_side_container = $RightSideContainer
 @onready var selection_overlay = $SelectionOverlay
+
+# Reference to the shop's tooth drawer system
+var shop_reference = null
 
 func _ready():
 	# Set this layer above the game UI
@@ -18,6 +22,15 @@ func _ready():
 	# Hide selection overlay initially
 	if selection_overlay:
 		selection_overlay.visible = false
+	
+	# Get reference to shop - try multiple paths
+	shop_reference = get_node("../Shop")
+	if not shop_reference:
+		shop_reference = get_node("../../Shop")
+	if not shop_reference:
+		shop_reference = get_tree().get_first_node_in_group("shop")
+	
+	print("ArtifactUI shop reference: ", shop_reference)
 
 # Called by GameManager when artifacts are added
 func setup_artifacts(artifacts: Array[ArtifactData]):
@@ -138,41 +151,82 @@ func _on_artifact_icon_input(event: InputEvent, artifact: ArtifactData):
 		
 		# Check if this artifact needs target selection
 		if needs_target_selection(artifact):
-			start_tooth_selection(artifact)
+			start_tooth_selection_with_drawer(artifact)
 		else:
-			# Use artifact without target
+			# Use artifact immediately (like Oracular Spectacular)
 			emit_signal("artifact_used", artifact.id, "")
 
 func needs_target_selection(artifact: ArtifactData) -> bool:
 	# Return true for artifacts that need to target a specific tooth
-	return artifact.id in ["tooth_modifier", "safe_tooth_revealer"]
+	# Oracular Spectacular doesn't need selection, it just reveals safe teeth
+	return artifact.id in ["tooth_modifier"]
 
-func start_tooth_selection(artifact: ArtifactData):
-	print("Starting tooth selection for: ", artifact.name)
+func start_tooth_selection_with_drawer(artifact: ArtifactData):
+	print("Starting tooth selection with drawer for: ", artifact.name)
+	print("Shop reference: ", shop_reference)
 	
-	# Show selection overlay
-	if selection_overlay:
-		selection_overlay.visible = true
-		selection_overlay.setup_for_artifact(artifact)
+	current_selection_artifact = artifact
 	
-	# You could also highlight available teeth here
-	highlight_selectable_teeth(artifact)
+	if shop_reference:
+		print("Shop reference found, checking for methods...")
+		
+		if shop_reference.has_method("open_drawer_for_artifact_selection"):
+			print("Using shop's artifact selection method")
+			shop_reference.open_drawer_for_artifact_selection(artifact)
+		elif shop_reference.has_method("open_drawer"):
+			print("Using shop's basic open_drawer method")
+			shop_reference.open_drawer()
+		else:
+			print("ERROR: Shop has no open_drawer method!")
+	else:
+		print("ERROR: No shop reference found!")
+		# Try to find the shop
+		var possible_shop = get_node("../Shop")
+		if possible_shop:
+			print("Found shop at ../Shop: ", possible_shop)
+			shop_reference = possible_shop
+			# Try again
+			start_tooth_selection_with_drawer(artifact)
+		else:
+			print("Could not find shop node!")
 
-func highlight_selectable_teeth(artifact: ArtifactData):
-	# This would highlight teeth that can be targeted
-	# Implementation depends on your 3D scene setup
-	print("Highlighting selectable teeth for: ", artifact.name)
+func connect_to_shop_teeth():
+	# Connect to the shop's physics teeth for selection
+	if shop_reference and shop_reference.has_signal("tooth_selected_for_artifact"):
+		if not shop_reference.is_connected("tooth_selected_for_artifact", _on_tooth_selected_from_drawer):
+			shop_reference.tooth_selected_for_artifact.connect(_on_tooth_selected_from_drawer)
+	
+	# If that doesn't exist, we'll need to connect to individual tooth signals
+	if shop_reference and shop_reference.has_method("get_teeth_slots"):
+		var teeth_slots = shop_reference.get_teeth_slots()
+		for i in range(teeth_slots.size()):
+			var tooth = teeth_slots[i]
+			if tooth and tooth.has_signal("tooth_clicked_for_artifact"):
+				if not tooth.is_connected("tooth_clicked_for_artifact", _on_tooth_selected_from_drawer):
+					tooth.tooth_clicked_for_artifact.connect(_on_tooth_selected_from_drawer.bind(i))
+
+func _on_tooth_selected_from_drawer(tooth_slot_index: int):
+	print("Tooth selected from drawer: slot ", tooth_slot_index)
+	
+	if current_selection_artifact:
+		# Convert slot index to tooth identifier that the artifact system expects
+		var tooth_identifier = "slot_" + str(tooth_slot_index)
+		emit_signal("artifact_used", current_selection_artifact.id, tooth_identifier)
+		
+		# Clean up
+		current_selection_artifact = null
+		
+		# Close the drawer
+		if shop_reference and shop_reference.has_method("close_drawer"):
+			shop_reference.close_drawer()
 
 func end_tooth_selection():
-	if selection_overlay:
-		selection_overlay.visible = false
+	print("Ending tooth selection")
+	current_selection_artifact = null
 	
-	# Remove highlights
-	remove_tooth_highlights()
-
-func remove_tooth_highlights():
-	# Remove any tooth highlighting
-	print("Removing tooth highlights")
+	# Close the drawer if it's open
+	if shop_reference and shop_reference.has_method("close_drawer"):
+		shop_reference.close_drawer()
 
 # Update icon states when artifacts are used
 func update_artifact_displays():
