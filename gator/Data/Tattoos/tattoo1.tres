@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="TattooData" load_steps=3 format=3 uid="uid://dttx4detqgkff"]
 
 [ext_resource type="Texture2D" uid="uid://cnte5esq8hd7q" path="res://Assets/Tattoos1.png" id="1_lrp21"]
-[ext_resource type="Script" uid="uid://bdyc72pl2m0y8" path="res://Scripts/Resources/TattooData.gd" id="2_fngoe"]
+[ext_resource type="Script" uid="uid://bdyc72pl2m0y8" path="res://Scripts/Classes/TattooData.gd" id="2_fngoe"]
 
 [resource]
 script = ExtResource("2_fngoe")

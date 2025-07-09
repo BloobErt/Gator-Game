@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="UIConfig" load_steps=2 format=3 uid="uid://6un6javcsp7g"]
+
+[ext_resource type="Script" uid="uid://dgtqefhe8vqt3" path="res://Scripts/Classes/UIConfig.gd" id="1_frtqm"]
+
+[resource]
+script = ExtResource("1_frtqm")
+score_popup_duration = 1.0
+score_popup_rise_distance = 100.0
+tooltip_fade_in_time = 0.2
+tooltip_fade_out_time = 0.1
+button_hover_scale = 1.05
+drawer_slide_time = 0.6
+transition_fade_time = 0.5
+enable_screen_shake = true
+bite_screen_shake_intensity = 10.0
+bite_screen_shake_duration = 0.3
+show_damage_numbers = true
+show_effect_descriptions = true
+tooltip_follow_mouse = true
+tooltip_offset = Vector2(15, -10)
+tooltip_max_width = 300.0
+tooltip_show_delay = 0.5
+tooltip_hide_delay = 0.1
+particle_intensity = 1.0
+enable_tooth_glow = true
+multiplier_tooth_glow_color = Color(1, 0.843137, 0, 1)
+safe_tooth_indicator_color = Color(0.196078, 0.803922, 0.196078, 1)
+bite_tooth_warning_color = Color(1, 0, 0, 1)
+ui_scale = 1.0
+compact_mode = false
+show_advanced_tooltips = true
+auto_hide_ui_delay = 5.0
+high_contrast_mode = false
+large_text_mode = false
+reduce_motion = false
+colorblind_friendly = false
+metadata/_custom_type_script = "uid://dgtqefhe8vqt3"

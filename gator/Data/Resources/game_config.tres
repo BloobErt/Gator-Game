@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3 uid="uid://vl7uh6e4sn8y"]
+
+[ext_resource type="Script" uid="uid://duwrofhquxwwl" path="res://Scripts/Classes/GameConfig.gd" id="1_rfpkj"]
+
+[resource]
+script = ExtResource("1_rfpkj")
+max_rounds_per_level = 5
+base_score_target = 100
+score_multiplier_per_level = 1.5
+max_levels = 10
+money_conversion_rate = 0.1
+clear_tooth_cost = 10
+shop_refresh_cost = 5
+default_max_tattoos_per_tooth = 3
+base_tooth_value_min = 5
+base_tooth_value_max = 15
+tooth_value_level_multiplier = 1.0
+multiplier_tooth_chance = 0.3
+default_multiplier_value = 2.0
+bite_penalty_percentage = 0.05
+end_round_button_delay = 2.0
+tattoo_slots_in_shop = 5
+artifact_slots_in_shop = 3
+shop_drawer_animation_speed = 0.6
+score_popup_duration = 1.0
+tooltip_show_delay = 0.1
+transition_fade_time = 0.5
+master_volume = 1.0
+sfx_volume = 0.8
+music_volume = 0.6
+ui_volume = 0.7
+debug_mode = false
+show_fps = false
+unlimited_money = false
+metadata/_custom_type_script = "uid://duwrofhquxwwl"

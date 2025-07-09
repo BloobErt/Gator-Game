@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ArtifactData" load_steps=3 format=3 uid="uid://mkoxcxcmmsdi"]
 
 [ext_resource type="Texture2D" uid="uid://ct3iyacop8sny" path="res://Assets/PlaceholderArtifacts4.png" id="1_fxnk4"]
-[ext_resource type="Script" uid="uid://b2wr7ajwqjar1" path="res://Scripts/Resources/ArtifactData.gd" id="2_pi52e"]
+[ext_resource type="Script" uid="uid://b2wr7ajwqjar1" path="res://Scripts/Classes/ArtifactData.gd" id="2_pi52e"]
 
 [resource]
 script = ExtResource("2_pi52e")

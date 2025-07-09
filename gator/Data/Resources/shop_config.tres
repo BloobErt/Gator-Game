@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="ShopConfig" load_steps=2 format=3 uid="uid://dyojj5etgx26k"]
+
+[ext_resource type="Script" uid="uid://cvd1sbhvmapbt" path="res://Scripts/Classes/ShopConfig.gd" id="1_3r72g"]
+
+[resource]
+script = ExtResource("1_3r72g")
+tattoo_slots = 5
+artifact_slots = 3
+enable_tooth_clearing = true
+clear_tooth_cost = 10
+tattoo_rarity_weights = {
+"common": 60,
+"epic": 9,
+"legendary": 1,
+"rare": 30
+}
+artifact_rarity_weights = {
+"common": 40,
+"epic": 13,
+"legendary": 2,
+"rare": 45
+}
+base_price_multiplier = 1.0
+level_price_scaling = 0.1
+rarity_price_multipliers = {
+"common": 1.0,
+"epic": 4.0,
+"legendary": 8.0,
+"rare": 2.0
+}
+available_tattoo_pools = {
+1: ["1", "2", "4"],
+2: ["1", "2", "3", "4"],
+3: ["1", "2", "3", "4", "5"]
+}
+available_artifact_pools = {
+1: ["tooth_modifier", "2"],
+2: ["tooth_modifier", "2", "3"],
+3: ["tooth_modifier", "2", "3", "safe_tooth_revealer"]
+}
+enable_refresh = false
+refresh_cost = 5
+free_refreshes_per_level = 1
+enable_discounts = true
+discount_chance = 0.1
+discount_amount = 0.25
+enable_bundles = false
+metadata/_custom_type_script = "uid://cvd1sbhvmapbt"
