@@ -258,7 +258,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("11_ghibi")
+texture = ExtResource("12_xu5fr")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Camera3D/Background"]
 root_node = NodePath("../TextureRect")

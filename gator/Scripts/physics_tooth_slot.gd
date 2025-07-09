@@ -98,7 +98,35 @@ func remove_tattoo_at_index(index: int):
 		update_display()
 
 func can_accept_tattoo() -> bool:
-	return applied_tattoos.size() < max_tattoos
+	# Get effective max tattoos (considering artifact modifications)
+	var effective_max = get_effective_max_tattoos()
+	var result = applied_tattoos.size() < effective_max
+	
+	print("🎯 CAN DROP CHECK on tooth ", slot_index)
+	print("  Current tattoos: ", applied_tattoos.size(), "/", effective_max)
+	print("  Result: ", result)
+	
+	return result
+
+func get_effective_max_tattoos() -> int:
+	# First check if this slot was directly modified by max_tattoos
+	if max_tattoos != 3:  # 3 is the default
+		print("  🔧 Using modified max_tattoos: ", max_tattoos)
+		return max_tattoos
+	
+	# Then check the GameManager's modification dictionary as backup
+	var game_manager = get_node("/root/Node3D")  # Adjust path as needed
+	if game_manager and game_manager.has_method("get") and game_manager.modified_teeth:
+		var tooth_key = "slot_" + str(slot_index)
+		if game_manager.modified_teeth.has(tooth_key):
+			var modification = game_manager.modified_teeth[tooth_key]
+			if modification.has("max_tattoos"):
+				print("  🔧 Using GameManager modified max_tattoos: ", modification.max_tattoos)
+				return modification.max_tattoos
+	
+	# Return default
+	print("  📝 Using default max_tattoos: ", max_tattoos)
+	return max_tattoos
 
 func update_display():
 	# Visual feedback based on tattoo count (similar to original ToothSlot.gd)

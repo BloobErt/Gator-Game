@@ -106,14 +106,28 @@ func apply_active_effect(target_tooth: String, game_state: Dictionary) -> Dictio
 		"persistent_effects": []
 	}
 	
-	if not is_active_artifact or uses_remaining == 0:
+	# Check if this artifact can be used (has uses or is unlimited)
+	if uses_remaining == 0:
+		result.special_effects.append("No uses remaining!")
 		return result
 	
 	match id:
 		"tooth_modifier":
 			# Check if target tooth has no tattoos
 			var tooth_tattoos = game_state.get("tooth_tattoos", {})
-			if not tooth_tattoos.has(target_tooth) or tooth_tattoos[target_tooth].size() == 0:
+			
+			# Handle slot-based targeting
+			var has_tattoos = false
+			if target_tooth.begins_with("slot_"):
+				# For slot-based system, we'll assume no tattoos for now
+				# You might want to implement slot tattoo checking here
+				has_tattoos = false
+			else:
+				# Regular tooth name checking
+				if tooth_tattoos.has(target_tooth) and tooth_tattoos[target_tooth].size() > 0:
+					has_tattoos = true
+			
+			if not has_tattoos:
 				result.success = true
 				result.persistent_effects.append({
 					"type": "modify_tooth",
@@ -122,24 +136,21 @@ func apply_active_effect(target_tooth: String, game_state: Dictionary) -> Dictio
 					"max_tattoos": 5
 				})
 				result.special_effects.append("Tooth modified: Half value, 5 tattoo slots!")
-				
-				# Use up one charge
-				if uses_remaining > 0:
-					uses_remaining -= 1
 			else:
 				result.special_effects.append("Cannot use on tooth with tattoos!")
 		
 		"safe_tooth_revealer":
+			# Oracular Spectacular - always succeeds
 			result.success = true
 			result.persistent_effects.append({
 				"type": "reveal_safe_teeth",
 				"count": 3
 			})
 			result.special_effects.append("Revealing 3 safe teeth!")
-			
-			# Single use artifact
-			if uses_remaining > 0:
-				uses_remaining -= 1
+		
+		_:
+			# Unknown artifact ID
+			result.special_effects.append("Unknown artifact effect!")
 	
 	return result
 

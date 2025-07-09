@@ -40,7 +40,7 @@ func _ready():
 	alligator.tooth_pressed.connect(_on_tooth_pressed)
 	alligator.tooth_bit.connect(_on_tooth_bit)
 	$Camera3D/dBackground/AnimationPlayer.play("game_loop_3d")
-	$Camera3D/Background/TextureRect.modulate.a = 0.0  # Transparent
+	$Camera3D/Background/TextureRect.modulate.a = 0.0
 	var anim_tree = $Camera3D/Background/AnimationTree
 	anim_tree.active = true
 	var playback = anim_tree.get("parameters/playback")
@@ -48,23 +48,28 @@ func _ready():
 	background_frame_sync.connect(_on_background_sync)
 	shop_loop_sync.connect(_on_shop_sync)
 	
-	 # Connect transition signal if it exists
 	if round_transition:
 		if not round_transition.is_connected("continue_pressed", _on_continue_to_shop):
 			round_transition.continue_pressed.connect(_on_continue_to_shop)
 	else:
 		push_error("Round transition reference is missing!")
-	# Start the first level
+	
 	start_level(current_level)
 	update_ui()
+	
 	if shop:
 		shop.shop_closed.connect(_on_shop_closed)
+		# IMPORTANT: Connect to the tooth selection signal from shop
+		if shop.has_signal("tooth_selected_for_artifact"):
+			shop.tooth_selected_for_artifact.connect(_on_tooth_selected_from_shop)
 	else:
-		push_error("Shop reference is null! Add the Shop scene to your main scene.")
+		push_error("Shop reference is null!")
+	
 	if artifact_ui:
 		artifact_ui.artifact_used.connect(_on_artifact_used)
-		artifact_ui.selection_overlay.tooth_selected.connect(_on_tooth_selected_for_artifact)
-		artifact_ui.selection_overlay.selection_cancelled.connect(_on_artifact_selection_cancelled)
+		# Note: We don't need the overlay connections since we're using the shop drawer
+	else:
+		push_error("ArtifactUI reference is null!")
 
 func start_level(level):
 	
@@ -203,6 +208,16 @@ func _on_tooth_pressed(tooth_name):
 	
 	# Update UI
 	update_ui()
+
+func _on_tooth_selected_from_shop(slot_index: int):
+	print("GameManager received tooth selection from shop: slot ", slot_index)
+	
+	if artifact_ui and artifact_ui.current_selection_artifact:
+		var artifact = artifact_ui.current_selection_artifact
+		var tooth_identifier = "slot_" + str(slot_index)
+		
+		print("Using artifact ", artifact.name, " on tooth slot ", slot_index)
+		_on_artifact_used(artifact.id, tooth_identifier)
 
 func show_score_popup_at_tooth(tooth_name: String, score: float, has_multiplier: bool):
 	var tooth_node = alligator.get_node(tooth_name)
@@ -412,14 +427,19 @@ func add_artifact(artifact: ArtifactData):
 		artifact_ui.setup_artifacts(owned_artifacts)
 
 func _on_artifact_used(artifact_id: String, target_tooth: String):
-	print("Using artifact: ", artifact_id, " on target: ", target_tooth)
+	print("=== ARTIFACT USED ===")
+	print("Artifact ID: ", artifact_id)
+	print("Target: ", target_tooth)
 	
 	var success = use_active_artifact(artifact_id, target_tooth)
 	
 	if success:
+		print("✅ Artifact used successfully!")
 		# Update the artifact UI to reflect used charges
 		if artifact_ui:
 			artifact_ui.update_artifact_displays()
+	else:
+		print("❌ Artifact failed to activate")
 	
 	# Always end selection mode
 	if artifact_ui:
@@ -490,36 +510,76 @@ func use_active_artifact(artifact_id: String, target_tooth: String = "") -> bool
 	print("Target tooth: ", target_tooth)
 	
 	for artifact in owned_artifacts:
-		if artifact.id == artifact_id and artifact.is_active_artifact:
+		if artifact.id == artifact_id:
 			print("Found matching artifact: ", artifact.name)
+			print("Is active: ", artifact.is_active_artifact)
 			print("Uses remaining: ", artifact.uses_remaining)
 			
-			var game_state = {
-				"tooth_tattoos": current_tooth_tattoos,
-				"current_round": current_round,
-				"teeth_pressed_count": alligator.pressed_teeth.size()
-			}
+			# Check if it's an active artifact with uses remaining
+			if artifact.is_active_artifact and artifact.uses_remaining > 0:
+				
+				var game_state = {
+					"tooth_tattoos": current_tooth_tattoos,
+					"current_round": current_round,
+					"teeth_pressed_count": alligator.pressed_teeth.size()
+				}
+				
+				var result = artifact.apply_active_effect(target_tooth, game_state)
+				
+				if result.success:
+					print("✅ Artifact activated successfully!")
+					
+					# IMPORTANT: Decrease uses ONLY on successful activation
+					artifact.uses_remaining -= 1
+					print("Uses remaining after use: ", artifact.uses_remaining)
+					
+					# Apply persistent effects
+					for effect in result.persistent_effects:
+						apply_artifact_persistent_effect(effect)
+					
+					# Show special effects
+					for effect in result.special_effects:
+						print("⚡ Active Artifact Effect: ", effect)
+					
+					return true
+				else:
+					print("❌ Artifact failed to activate")
+					for effect in result.special_effects:
+						print("❌ Failure reason: ", effect)
+					return false
 			
-			var result = artifact.apply_active_effect(target_tooth, game_state)
-			
-			if result.success:
-				print("✅ Artifact used successfully!")
+			# Handle non-active artifacts (like Oracular Spectacular)
+			elif not artifact.is_active_artifact:
+				print("Using non-active artifact: ", artifact.name)
 				
-				# Apply persistent effects
-				for effect in result.persistent_effects:
-					apply_artifact_persistent_effect(effect)
+				# For non-active artifacts, we can still apply their effects
+				var game_state = {
+					"tooth_tattoos": current_tooth_tattoos,
+					"current_round": current_round,
+					"teeth_pressed_count": alligator.pressed_teeth.size()
+				}
 				
-				# Show special effects
-				for effect in result.special_effects:
-					print("⚡ Active Artifact Effect: ", effect)
+				# Try to use it as if it were active
+				var result = artifact.apply_active_effect(target_tooth, game_state)
 				
-				return true
+				if result.success:
+					# Apply persistent effects
+					for effect in result.persistent_effects:
+						apply_artifact_persistent_effect(effect)
+					
+					# Show special effects
+					for effect in result.special_effects:
+						print("⚡ Artifact Effect: ", effect)
+					
+					return true
+				else:
+					print("Non-active artifact had no effect")
+					return false
 			else:
-				print("❌ Artifact failed to activate")
-				for effect in result.special_effects:
-					print("❌ Failure reason: ", effect)
+				print("❌ Artifact has no uses remaining")
+				return false
 	
-	print("❌ No matching active artifact found")
+	print("❌ No matching artifact found")
 	return false
 
 # Apply persistent effects from artifacts
@@ -528,18 +588,47 @@ func apply_artifact_persistent_effect(effect: Dictionary):
 	
 	match effect.type:
 		"modify_tooth":
-			var tooth_name = effect.tooth_name
-			modified_teeth[tooth_name] = {
-				"value_multiplier": effect.value_multiplier,
-				"max_tattoos": effect.max_tattoos
-			}
-			print("🔧 Modified tooth ", tooth_name, " - Value: x", effect.value_multiplier, ", Max tattoos: ", effect.max_tattoos)
+			var tooth_identifier = effect.tooth_name
+			if tooth_identifier.begins_with("slot_"):
+				var slot_index = int(tooth_identifier.split("_")[1])
+				print("🔧 Modified tooth slot ", slot_index, " - Max tattoos: ", effect.max_tattoos)
+				
+				# Store the modification in the persistent dictionary
+				modified_teeth[tooth_identifier] = {
+					"value_multiplier": effect.value_multiplier,
+					"max_tattoos": effect.max_tattoos
+				}
+				
+				# Also update the actual tooth slot if it exists
+				update_tooth_slot_max_tattoos(slot_index, effect.max_tattoos)
+			else:
+				modified_teeth[tooth_identifier] = {
+					"value_multiplier": effect.value_multiplier,
+					"max_tattoos": effect.max_tattoos
+				}
+				print("🔧 Modified tooth ", tooth_identifier)
 		
 		"reveal_safe_teeth":
 			reveal_safe_teeth(effect.count)
 		
 		"set_max_rounds":
 			print("⏰ Max rounds set to: ", effect.value)
+
+func update_tooth_slot_max_tattoos(slot_index: int, new_max: int):
+	print("Attempting to update tooth slot ", slot_index, " max_tattoos to: ", new_max)
+	
+	# Try to find and update the tooth slot directly
+	var shop = get_node_or_null("Shop")
+	if shop and shop.has_method("get_teeth_slots"):
+		var teeth_slots = shop.get_teeth_slots()
+		if teeth_slots and slot_index < teeth_slots.size():
+			var tooth_slot = teeth_slots[slot_index]
+			if tooth_slot and is_instance_valid(tooth_slot):
+				tooth_slot.max_tattoos = new_max
+				print("✅ Updated tooth slot ", slot_index, " max_tattoos to: ", new_max)
+				return
+	
+	print("⚠️ Could not find tooth slot ", slot_index, " to update")
 
 # Reveal safe teeth with visual indicators
 func reveal_safe_teeth(count: int):
@@ -653,6 +742,30 @@ func apply_game_modification(modification: Dictionary):
 	match modification.type:
 		"set_max_rounds":
 			print("Game modification: Max rounds = ", modification.value)
+
+func restore_artifact_effects_to_teeth():
+	print("Restoring artifact effects to recreated teeth...")
+	
+	var shop = get_node_or_null("Shop")
+	if not shop or not shop.has_method("get_teeth_slots"):
+		return
+	
+	var teeth_slots = shop.get_teeth_slots()
+	if not teeth_slots:
+		return
+	
+	# Apply all stored modifications to the new teeth
+	for tooth_key in modified_teeth.keys():
+		if tooth_key.begins_with("slot_"):
+			var slot_index = int(tooth_key.split("_")[1])
+			var modification = modified_teeth[tooth_key]
+			
+			if slot_index < teeth_slots.size():
+				var tooth_slot = teeth_slots[slot_index]
+				if tooth_slot and is_instance_valid(tooth_slot):
+					if modification.has("max_tattoos"):
+						tooth_slot.max_tattoos = modification.max_tattoos
+						print("🔧 Restored artifact effect: Slot ", slot_index, " max_tattoos = ", modification.max_tattoos)
 
 func update_ui():
 	

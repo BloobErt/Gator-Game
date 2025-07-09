@@ -28,9 +28,40 @@ func _update_label(index: int):
 		push_error("ToothLabel node not found! Check the node structure.")
 
 # Rest of the script remains the same...
-func _can_drop_data(position, data):
-	# Can accept tattoo drops if not at max capacity
-	return data.has("type") and data.type == "tattoo" and applied_tattoos.size() < max_tattoos
+func can_drop_data(position: Vector2, data) -> bool:
+	print("🎯 CAN DROP CHECK on tooth ", slot_index)
+	print("  Data type: ", data.get("type", "unknown"))
+	print("  Has tattoo data: ", data.has("tattoo_data"))
+	
+	if data.get("type") == "tattoo" and data.has("tattoo_data"):
+		# Get the current max tattoos for this slot (considering artifact effects)
+		var max_tattoos = get_effective_max_tattoos()
+		var current_count = applied_tattoos.size()
+		
+		print("  Current tattoos: ", current_count, "/", max_tattoos)
+		print("  Result: ", current_count < max_tattoos)
+		
+		return current_count < max_tattoos
+	
+	return false
+
+# Add this new function to get the effective max tattoos
+func get_effective_max_tattoos() -> int:
+	# Check if this tooth has been modified by artifacts
+	var game_manager = get_tree().get_first_node_in_group("game_manager")
+	if not game_manager:
+		game_manager = get_node("/root/GameManager")
+	
+	if game_manager and game_manager.modified_teeth:
+		var tooth_key = "slot_" + str(slot_index)
+		if game_manager.modified_teeth.has(tooth_key):
+			var modification = game_manager.modified_teeth[tooth_key]
+			if modification.has("max_tattoos"):
+				print("  🔧 Artifact modified max tattoos: ", modification.max_tattoos)
+				return modification.max_tattoos
+	
+	# Return default max tattoos
+	return max_tattoos
 
 func _drop_data(position, data):
 	if data.type == "tattoo":

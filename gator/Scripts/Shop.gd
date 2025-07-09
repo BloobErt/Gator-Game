@@ -619,36 +619,39 @@ func open_drawer_for_artifact_selection(artifact: ArtifactData):
 	artifact_selection_mode = true
 	current_artifact_for_selection = artifact
 	
-	# IMPORTANT: Make shop visible during artifact selection
+	# Make shop visible during artifact selection
 	visible = true
 	
-	# Show instruction overlay or modify UI to indicate selection mode
 	show_artifact_selection_instructions(artifact)
-	
-	# Open the drawer
 	open_drawer()
-	
-	# Connect teeth for artifact selection
 	connect_teeth_for_artifact_selection()
 
 func show_artifact_selection_instructions(artifact: ArtifactData):
-	# You could add a temporary instruction label here
 	print("Select a tooth to use ", artifact.name, " on")
 	
-	# Optionally show which teeth are valid targets
 	match artifact.id:
 		"tooth_modifier":
 			print("Select a tooth with no tattoos")
+		"safe_tooth_revealer":
+			print("Click any tooth to reveal safe teeth")
 
 func connect_teeth_for_artifact_selection():
-	# Connect to existing tooth slots for artifact selection
+	print("Connecting teeth for artifact selection...")
+	
+	# Connect each tooth for artifact selection
 	for i in range(teeth_slots.size()):
 		var tooth = teeth_slots[i]
-		if tooth and tooth.has_method("setup_for_artifact_selection"):
-			tooth.setup_for_artifact_selection(i, self)
-		else:
-			# Fallback: connect to existing signals or input events
-			setup_tooth_for_artifact_click(tooth, i)
+		if tooth:
+			# Connect to the drop area's input for clicking
+			var drop_area = tooth.get_node_or_null("DropArea")
+			if drop_area:
+				# Disconnect any existing connections first
+				if drop_area.is_connected("gui_input", _on_tooth_clicked_for_artifact_selection):
+					drop_area.disconnect("gui_input", _on_tooth_clicked_for_artifact_selection)
+				
+				# Connect the new signal
+				drop_area.gui_input.connect(_on_tooth_clicked_for_artifact_selection.bind(i))
+				print("Connected tooth ", i, " for artifact selection")
 
 func setup_tooth_for_artifact_click(tooth, slot_index: int):
 	# Add a click handler to the tooth for artifact selection
@@ -733,6 +736,22 @@ func _on_tooth_clicked_for_artifact(event: InputEvent, slot_index: int):
 		else:
 			print("Invalid tooth for artifact ", current_artifact_for_selection.name)
 
+func _on_tooth_clicked_for_artifact_selection(event: InputEvent, slot_index: int):
+	print("Tooth clicked for artifact selection - Slot: ", slot_index, " Mode: ", artifact_selection_mode)
+	
+	if not artifact_selection_mode:
+		return
+	
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("Valid click for artifact selection on slot: ", slot_index)
+		
+		if is_valid_tooth_for_artifact(slot_index):
+			print("Tooth is valid, emitting signal...")
+			emit_signal("tooth_selected_for_artifact", slot_index)
+			exit_artifact_selection_mode()
+		else:
+			print("Invalid tooth for artifact: ", current_artifact_for_selection.name if current_artifact_for_selection else "none")
+
 func is_valid_tooth_for_artifact(slot_index: int) -> bool:
 	if not current_artifact_for_selection:
 		return false
@@ -745,15 +764,17 @@ func is_valid_tooth_for_artifact(slot_index: int) -> bool:
 				return tooth.applied_tattoos.size() == 0
 			else:
 				return false
+		"safe_tooth_revealer":
+			# Oracular Spectacular can be used anywhere
+			return true
 		_:
 			return true
 
 func exit_artifact_selection_mode():
+	print("Exiting artifact selection mode")
 	artifact_selection_mode = false
 	current_artifact_for_selection = null
 	close_drawer()
-	
-	# Hide shop again after artifact selection
 	visible = false
 
 func get_teeth_slots() -> Array:
@@ -772,6 +793,11 @@ func recreate_all_teeth():
 	
 	# Destroy and recreate teeth
 	setup_physics_teeth()
+	
+	# Get the GameManager to restore artifact effects
+	var game_manager = get_node("/root/Node3D")  # Adjust path as needed
+	if game_manager and game_manager.has_method("restore_artifact_effects_to_teeth"):
+		game_manager.restore_artifact_effects_to_teeth()
 	
 	# Reapply tattoos safely
 	for i in range(min(tattoo_data.size(), teeth_slots.size())):
