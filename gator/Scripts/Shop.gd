@@ -121,10 +121,10 @@ func create_drawer_walls():
 		print("Created kinematic wall: ", wall_data.name)
 
 func generate_tattoo_pool():
-	# Automatically load all TattooData resources from the folder
+	# Load all TattooData resources from the Data folder (not Scripts folder)
 	available_tattoos.clear()
 	
-	var tattoo_folder = "res://Scripts/Resources/Tattoos/"
+	var tattoo_folder = "res://Data/"  # Changed from res://Scripts/Resources/Tattoos/
 	var dir = DirAccess.open(tattoo_folder)
 	
 	if dir:
@@ -132,8 +132,8 @@ func generate_tattoo_pool():
 		var file_name = dir.get_next()
 		
 		while file_name != "":
-			# Only process .tres files
-			if file_name.ends_with(".tres"):
+			# Look for files that start with "tattoo" and end with ".tres"
+			if file_name.begins_with("tattoo") and file_name.ends_with(".tres"):
 				var full_path = tattoo_folder + file_name
 				print("Attempting to load: ", full_path)
 				
@@ -152,10 +152,10 @@ func generate_tattoo_pool():
 		print("❌ Could not open tattoo directory: ", tattoo_folder)
 
 func generate_artifact_pool():
-	# Load artifacts from resources folder instead of creating them programmatically
+	# Load artifacts from Data folder (not Scripts folder)
 	available_artifacts.clear()
 	
-	var artifact_folder = "res://Scripts/Resources/Artifacts/"
+	var artifact_folder = "res://Data/"  # Changed from res://Scripts/Resources/Artifacts/
 	var dir = DirAccess.open(artifact_folder)
 	
 	if dir:
@@ -163,7 +163,8 @@ func generate_artifact_pool():
 		var file_name = dir.get_next()
 		
 		while file_name != "":
-			if file_name.ends_with(".tres"):
+			# Look for files that start with "artifact" and end with ".tres"
+			if file_name.begins_with("artifact") and file_name.ends_with(".tres"):
 				var full_path = artifact_folder + file_name
 				print("Attempting to load artifact: ", full_path)
 				
