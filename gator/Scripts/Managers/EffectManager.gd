@@ -103,13 +103,35 @@ func use_active_artifact(artifact_id: String, target: String = "") -> bool:
 func apply_artifact_persistent_effect_dict(effect: Dictionary):
 	match effect.type:
 		"modify_tooth":
-			# Signal to tooth manager or game manager
-			print("🔧 Tooth modification: ", effect)
+			# Actually modify the tooth slot
+			modify_tooth_slot(effect)
+			print("🔧 Tooth modification applied: ", effect)
 		"reveal_safe_teeth":
 			# Signal to create safe tooth indicators
 			print("👁️ Revealing safe teeth: ", effect.count)
 		"set_max_rounds":
 			active_modifiers["max_rounds"] = effect.value
+
+func modify_tooth_slot(effect: Dictionary):
+	"""Actually modify a tooth slot based on the effect"""
+	var tooth_name = effect.get("tooth_name", "")
+	
+	# Get reference to shop's teeth slots
+	var game_manager = get_parent()  # Assuming EffectManager is child of GameManager
+	if game_manager and game_manager.shop:
+		var teeth_slots = game_manager.shop.get_teeth_slots()
+		
+		# Extract slot index from identifier like "slot_3"
+		if tooth_name.begins_with("slot_"):
+			var slot_index = int(tooth_name.split("_")[1])
+			
+			if slot_index < teeth_slots.size():
+				var tooth_slot = teeth_slots[slot_index]
+				
+				# Apply the modification
+				if effect.has("max_tattoos"):
+					tooth_slot.max_tattoos = effect.max_tattoos
+					print("🔧 Tooth slot ", slot_index, " max tattoos set to ", effect.max_tattoos)
 
 func get_active_artifacts() -> Array[ArtifactData]:
 	var active: Array[ArtifactData] = []

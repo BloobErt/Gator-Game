@@ -168,6 +168,9 @@ func connect_manager_signals():
 	if shop:
 		shop.shop_closed.connect(_on_shop_closed)
 		shop.tooth_selected_for_artifact.connect(_on_tooth_selected_from_shop)
+	
+	if artifact_ui:
+		artifact_ui.artifact_used.connect(_on_artifact_used)
 
 # === GAME FLOW ===
 func start_game():
@@ -248,6 +251,19 @@ func _on_bite_tooth_hit(tooth_name: String):
 			ui_manager.show_bite_survival_message()
 	else:
 		end_round()
+
+func _on_artifact_used(artifact_id: String, target_tooth: String):
+	# Just delegate to EffectManager and handle UI feedback
+	if effect_manager:
+		var success = effect_manager.use_active_artifact(artifact_id, target_tooth)
+		
+		# Update artifact UI to reflect changes
+		if success and artifact_ui:
+			artifact_ui.update_artifact_displays()
+		
+		return success
+	
+	return false
 
 func _on_background_transition_completed(transition_name: String):
 	

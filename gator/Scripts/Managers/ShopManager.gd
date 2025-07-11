@@ -69,13 +69,9 @@ func close_shop():
 	emit_signal("shop_closed", final_mapping, newly_purchased_artifacts.duplicate())
 
 func open_drawer_for_artifact_selection(artifact: ArtifactData):
-	print("Opening drawer for artifact selection: ", artifact.name)
-	
+	"""Delegate to tooth drawer manager"""
 	if tooth_drawer:
 		tooth_drawer.open_for_artifact_selection(artifact)
-	
-	# Make shop visible during artifact selection
-	visible = true
 
 # === PRIVATE METHODS ===
 
@@ -152,9 +148,15 @@ func _on_clear_tooth_requested():
 # === UTILITY ===
 
 func get_teeth_slots():
+	"""Delegate to tooth drawer manager"""
 	if tooth_drawer:
 		return tooth_drawer.get_teeth_slots()
 	return []
+
+func close_drawer():
+	"""Delegate to tooth drawer manager"""
+	if tooth_drawer:
+		tooth_drawer.close_drawer()
 
 func is_open() -> bool:
 	return visible
