@@ -24,9 +24,9 @@ func _ready():
 		selection_overlay.selection_cancelled.connect(_on_artifact_selection_cancelled)
 	
 	# Get reference to shop
-	shop_reference = get_node("../Shop")
+	shop_reference = get_node("../Shop")  # Should still work
 	if not shop_reference:
-		shop_reference = get_node("../../Shop")
+		shop_reference = get_node("../../Shop")  # Try parent's parent
 	if not shop_reference:
 		shop_reference = get_tree().get_first_node_in_group("shop")
 	
@@ -145,6 +145,7 @@ func start_tooth_selection_with_drawer(artifact: ArtifactData):
 	
 	current_selection_artifact = artifact
 	
+	# NEW: Updated method call
 	if shop_reference and shop_reference.has_method("open_drawer_for_artifact_selection"):
 		shop_reference.open_drawer_for_artifact_selection(artifact)
 	else:

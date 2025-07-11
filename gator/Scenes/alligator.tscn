@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=3 uid="uid://b8a1vsh2qydig"]
+[gd_scene load_steps=57 format=3 uid="uid://b8a1vsh2qydig"]
 
 [ext_resource type="Script" uid="uid://dflsbiautig3x" path="res://Scripts/Managers/GameManager.gd" id="1_v0ff7"]
 [ext_resource type="PackedScene" uid="uid://c1xc2vs4locvu" path="res://Scenes/shop.tscn" id="2_6ohho"]
@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://dn7ug31lcpkqu" path="res://Assets/ingame1.png" id="7_0i5w4"]
 [ext_resource type="Script" uid="uid://b5y3a5ihfpmqd" path="res://Scripts/Managers/AudioManager.gd" id="7_5tnkh"]
 [ext_resource type="Texture2D" uid="uid://dapjvbyq4esfq" path="res://Assets/ingame6.png" id="7_r6lpp"]
+[ext_resource type="Script" uid="uid://c6m5lhfg7psbg" path="res://Scripts/Managers/BackgroundManager.gd" id="8_u8alt"]
 [ext_resource type="Texture2D" uid="uid://dtovsccihgxan" path="res://Assets/ingame2.png" id="9_8wk32"]
 [ext_resource type="Texture2D" uid="uid://cj288er6dfyxr" path="res://Assets/ingame3.png" id="10_rpk1n"]
 [ext_resource type="Texture2D" uid="uid://0flkonnkln63" path="res://Assets/ingame4.png" id="11_ghibi"]
@@ -81,11 +82,11 @@ tracks/0/keys = {
 tracks/1/type = "method"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("../..")
+tracks/1/path = NodePath("../../BackgroundManager")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(1),
+"times": PackedFloat32Array(0.833333),
 "transitions": PackedFloat32Array(1),
 "values": [{
 "args": [],
@@ -132,7 +133,7 @@ tracks/0/keys = {
 tracks/1/type = "method"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("../../..")
+tracks/1/path = NodePath("../../../BackgroundManager")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
@@ -246,6 +247,9 @@ script = ExtResource("6_l723h")
 [node name="AudioManager" type="Node" parent="."]
 script = ExtResource("7_5tnkh")
 
+[node name="BackgroundManager" type="Node" parent="."]
+script = ExtResource("8_u8alt")
+
 [node name="GameUI" parent="." instance=ExtResource("2_vc6s6")]
 layer = -2
 
@@ -282,7 +286,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("18_xuti8")
+texture = ExtResource("12_xu5fr")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Camera3D/Background"]
 root_node = NodePath("../TextureRect")

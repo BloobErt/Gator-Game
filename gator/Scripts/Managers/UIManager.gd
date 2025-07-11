@@ -89,8 +89,10 @@ func show_bite_survival_message():
 	print("✨ BITE SURVIVAL ACTIVATED!")
 
 func open_shop(money: int, shop_config: ShopConfig):
-	if shop and shop.has_method("open_shop"):
-		shop.open_shop(money)
+	# OLD: if shop and shop.has_method("open_shop"):
+	#     shop.open_shop(money)
+	# This can be removed since GameManager calls shop directly now
+	pass
 
 func create_floating_text(text: String, position: Vector2, color: Color = Color.WHITE):
 	# Create floating text effect

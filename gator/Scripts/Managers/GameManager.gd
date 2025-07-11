@@ -16,11 +16,13 @@ var all_level_data: Array[LevelData] = []
 @onready var effect_manager = $EffectManager
 @onready var ui_manager = $UIManager
 @onready var audio_manager = $AudioManager
+@onready var background_manager = $BackgroundManager
 
 # === UI REFERENCES ===
 @onready var round_transition = $RoundTransition
 @onready var shop = $Shop
 @onready var game_ui = $GameUI
+@onready var artifact_ui = $ArtifactUI
 
 # === CORE GAME STATE ===
 var current_level: int = 1
@@ -35,30 +37,9 @@ signal game_over(final_score: int)
 signal background_frame_sync
 signal shop_loop_sync
 
-func emit_3d_frame_sync():
-	emit_signal("background_frame_sync")
-
-func emit_shop_loop_sync():
-	emit_signal("shop_loop_sync")
-
-# Add signal handlers to respond to animation events
-func _on_background_sync():
-	# This is called by the 3D background animation loop
-	# You can add any per-frame sync logic here
-	pass
-
-func _on_shop_sync():
-	# This is called by the shop animation loop
-	# You can add any shop-specific sync logic here
-	pass
-
 func _ready():
 	load_all_configs()
 	setup_managers()
-	
-	# FIX: Ensure 3D scene is visible and 2D background is hidden
-	setup_scene_visibility()
-	
 	start_game()
 
 # === CONFIGURATION LOADING ===
@@ -74,33 +55,7 @@ func load_all_configs():
 	# Load all level data
 	load_level_configurations()
 	
-	# FIX: Load tattoos and artifacts from Data folder
-	load_tattoo_and_artifact_data()
-	
 	print("✅ All configurations loaded successfully")
-
-func load_tattoo_and_artifact_data():
-	print("Loading tattoo and artifact data...")
-	
-	# Load tattoos from Data folder
-	var tattoo_folder = "res://Data/"
-	var dir = DirAccess.open(tattoo_folder)
-	if dir:
-		dir.list_dir_begin()
-		var file_name = dir.get_next()
-		while file_name != "":
-			if file_name.begins_with("tattoo") and file_name.ends_with(".tres"):
-				var full_path = tattoo_folder + file_name
-				var tattoo_data = load(full_path)
-				if tattoo_data is TattooData:
-					print("✅ Found tattoo: ", tattoo_data.name)
-			if file_name.begins_with("artifact") and file_name.ends_with(".tres"):
-				var full_path = tattoo_folder + file_name
-				var artifact_data = load(full_path)
-				if artifact_data is ArtifactData:
-					print("✅ Found artifact: ", artifact_data.name)
-			file_name = dir.get_next()
-		dir.list_dir_end()
 
 func load_or_create_config(path: String, config_class) -> Resource:
 	if ResourceLoader.exists(path):
@@ -170,29 +125,6 @@ func create_level(level_num: int):
 	all_level_data.append(level_data)
 	print("✅ Created level ", level_num, " with target score: ", level_data.target_score)
 
-func setup_scene_visibility():
-	print("🔍 DEBUG: setup_scene_visibility() called")
-	
-	# Hide the 2D background initially so we can see the 3D scene
-	var bg_2d = get_node_or_null("Camera3D/Background/TextureRect")
-	if bg_2d:
-		bg_2d.modulate.a = 0.0
-		print("✅ DEBUG: 2D background hidden, alpha = ", bg_2d.modulate.a)
-	
-	# Make sure alligator is visible
-	var alligator = get_node_or_null("Alligator") 
-	if alligator:
-		alligator.visible = true
-		print("✅ DEBUG: Alligator visible = ", alligator.visible)
-	
-	# Camera debug
-	var camera = get_node_or_null("Camera3D")
-	if camera:
-		print("✅ DEBUG: Camera found at: ", camera.global_position)
-	
-	# START THE 3D BACKGROUND ANIMATION
-	start_3d_background_animation()
-
 # === MANAGER SETUP ===
 func setup_managers():
 	# Pass configs to managers
@@ -208,12 +140,11 @@ func setup_managers():
 		ui_manager.setup(ui_config, $GameUI, $RoundTransition)
 	if audio_manager:
 		audio_manager.setup(audio_config)
+	if background_manager:
+		background_manager.setup(ui_config)
 	
 	# Connect manager signals
 	connect_manager_signals()
-	
-	# Connect background animation signals
-	connect_background_signals()
 
 func connect_manager_signals():
 	if progression_manager:
@@ -230,20 +161,13 @@ func connect_manager_signals():
 	if ui_manager:
 		ui_manager.continue_to_shop.connect(_on_continue_to_shop)
 		ui_manager.shop_closed.connect(_on_shop_closed)
-
-func connect_background_signals():
-	# Define the signals first
-	if not has_signal("background_frame_sync"):
-		add_user_signal("background_frame_sync")
 	
-	if not has_signal("shop_loop_sync"):
-		add_user_signal("shop_loop_sync")
+	if background_manager:
+		background_manager.transition_completed.connect(_on_background_transition_completed)
 	
-	# Connect to the signal handlers
-	background_frame_sync.connect(_on_background_sync)
-	shop_loop_sync.connect(_on_shop_sync)
-	
-	print("✅ Background animation signals connected")
+	if shop:
+		shop.shop_closed.connect(_on_shop_closed)
+		shop.tooth_selected_for_artifact.connect(_on_tooth_selected_from_shop)
 
 # === GAME FLOW ===
 func start_game():
@@ -252,6 +176,11 @@ func start_game():
 	total_score = 0
 	
 	load_level(current_level)
+	
+	# Start background animations
+	if background_manager:
+		background_manager.start_game_mode()
+	
 	start_round()
 
 func load_level(level_number: int):
@@ -285,25 +214,6 @@ func start_round():
 	
 	update_ui()
 
-func start_3d_background_animation():
-	# Start the 3D background animation
-	var bg_3d_anim = get_node_or_null("Camera3D/dBackground/AnimationPlayer")
-	if bg_3d_anim:
-		bg_3d_anim.play("game_loop_3d")
-		print("✅ Started 3D background animation")
-	else:
-		print("❌ Could not find 3D background AnimationPlayer")
-	
-	# Start the 2D background animation tree in game mode
-	var bg_2d_anim_tree = get_node_or_null("Camera3D/Background/AnimationTree")
-	if bg_2d_anim_tree:
-		bg_2d_anim_tree.active = true
-		var playback = bg_2d_anim_tree.get("parameters/playback")
-		playback.travel("game_loop")
-		print("✅ Started 2D background AnimationTree in game_loop mode")
-	else:
-		print("❌ Could not find 2D background AnimationTree")
-
 # === EVENT HANDLERS ===
 func _on_tooth_pressed(tooth_name: String, score_value: int):
 	round_score += score_value
@@ -325,7 +235,6 @@ func _on_bite_tooth_hit(tooth_name: String):
 	# Apply penalty
 	var penalty = int(round_score * game_config.bite_penalty_percentage)
 	round_score = max(0, round_score - penalty)
-	print("💰 Penalty applied: -", penalty, " (New score: ", round_score, ")")
 	
 	# Check for bite survival artifacts
 	var can_continue = effect_manager.handle_bite_survival()
@@ -338,8 +247,18 @@ func _on_bite_tooth_hit(tooth_name: String):
 		if ui_manager:
 			ui_manager.show_bite_survival_message()
 	else:
-		print("🎬 Ending round due to bite...")
-		end_round()  # This should now properly show transition
+		end_round()
+
+func _on_background_transition_completed(transition_name: String):
+	
+	match transition_name:
+		"to_shop":
+			print("🔍 DEBUG: Transition to shop complete - waiting for continue button")
+			# DON'T open shop here - wait for continue button
+		"to_game":
+			# NOW start the next round after transition completes
+			current_round += 1
+			start_round()
 
 func _on_level_completed(level_number: int, final_score: int):
 	print("🎉 LEVEL ", level_number, " COMPLETED with score: ", final_score)
@@ -371,21 +290,22 @@ func _on_round_completed(round_number: int, score: int):
 		show_round_transition()
 
 func _on_continue_to_shop():
-	print("🛒 Opening shop...")
-	
-	# Transition AnimationTree to shop mode
-	var bg_2d_anim_tree = get_node_or_null("Camera3D/Background/AnimationTree")
-	if bg_2d_anim_tree:
-		var playback = bg_2d_anim_tree.get("parameters/playback")
-		playback.travel("shop_loop")
-		print("🛒 Started shop_loop animation")
-	
 	if economy_manager and ui_manager:
 		var money = economy_manager.get_current_money()
-		ui_manager.open_shop(money, shop_config)
+		if shop:
+			shop.open_shop(money, shop_config)
+
+func _on_tooth_selected_from_shop(slot_index: int):
+	print("GameManager received tooth selection from shop: slot ", slot_index)
+	
+	if artifact_ui and artifact_ui.current_selection_artifact:
+		var artifact = artifact_ui.current_selection_artifact
+		var tooth_identifier = "slot_" + str(slot_index)
+		
+		print("Using artifact ", artifact.name, " on tooth slot ", slot_index)
+		_on_artifact_used(artifact.id, tooth_identifier)
 
 func _on_shop_closed(teeth_mapping: Dictionary, purchased_artifacts: Array):
-	print("🛒 Shop closed, returning to game...")
 	
 	# Apply new tattoos and artifacts
 	if tooth_manager:
@@ -393,29 +313,9 @@ func _on_shop_closed(teeth_mapping: Dictionary, purchased_artifacts: Array):
 	if effect_manager:
 		effect_manager.add_artifacts(purchased_artifacts)
 	
-	# RESUME the 3D background animation
-	var bg_3d_anim = get_node_or_null("Camera3D/dBackground/AnimationPlayer")
-	if bg_3d_anim:
-		bg_3d_anim.play("game_loop_3d")  # Resume/restart the 3D animation
-		print("▶️ Resumed 3D background animation")
-	
-	# Transition back to game mode in AnimationTree
-	var bg_2d_anim_tree = get_node_or_null("Camera3D/Background/AnimationTree")
-	if bg_2d_anim_tree:
-		var playback = bg_2d_anim_tree.get("parameters/playback")
-		playback.travel("transition_to_game")
-		print("🎮 Started transition_to_game animation")
-	
-	# The 2D background will be hidden by the transition animation
-	# Hide it immediately for now
-	var bg_2d = get_node_or_null("Camera3D/Background/TextureRect")
-	if bg_2d:
-		bg_2d.modulate.a = 0.0
-		print("✅ Returned to 3D view")
-	
-	# Start next round
-	current_round += 1
-	start_round()
+	# Start background transition back to game
+	if background_manager:
+		background_manager.transition_to_game()
 
 func _on_shop_transaction(cost: int, item_type: String):
 	print("💰 Shop transaction: ", cost, " gold for ", item_type)
@@ -434,44 +334,19 @@ func update_ui():
 		ui_manager.update_money(economy_manager.get_current_money())
 
 func show_round_transition():
-	print("🎬 Showing round transition...")
 	
-	# Check if round_transition exists
-	if not round_transition:
-		round_transition = get_node_or_null("RoundTransition")
-		if not round_transition:
-			print("❌ DEBUG: RoundTransition node not found!")
-			return
+	if ui_manager:
+		var money_earned = economy_manager.calculate_round_money(round_score)
+		ui_manager.show_round_transition(round_score, money_earned, total_score, current_level_data.target_score)
 	
-	# PAUSE the 3D background during transition
-	var bg_3d_anim = get_node_or_null("Camera3D/dBackground/AnimationPlayer")
-	if bg_3d_anim:
-		bg_3d_anim.pause()
-		print("⏸️ Paused 3D background animation")
-	
-	# Start transition to shop in AnimationTree
-	var bg_2d_anim_tree = get_node_or_null("Camera3D/Background/AnimationTree")
-	if bg_2d_anim_tree:
-		var playback = bg_2d_anim_tree.get("parameters/playback")
-		playback.travel("transition_to_shop")
-		print("🎬 Started transition_to_shop animation")
-	
-	# Show the 2D background for transition
-	var bg_2d = get_node_or_null("Camera3D/Background/TextureRect")
-	if bg_2d:
-		bg_2d.modulate.a = 1.0
-		print("✅ 2D background shown for transition")
-	
-	# Calculate money earned and show transition
-	var money_earned = economy_manager.calculate_round_money(round_score)
-	if round_transition and round_transition.has_method("show_results"):
-		round_transition.show_results(round_score, money_earned, total_score, current_level_data.target_score)
+	# Start background transition to shop
+	if background_manager:
+		background_manager.transition_to_shop()
 
 func end_round():
 	total_score += round_score
 	economy_manager.award_round_money(round_score)
 	
-	# FIX: Show the round transition screen
 	show_round_transition()
 	
 	emit_signal("round_completed", current_round, round_score)

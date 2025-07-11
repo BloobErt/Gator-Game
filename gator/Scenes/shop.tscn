@@ -1,91 +1,24 @@
-[gd_scene load_steps=5 format=3 uid="uid://c1xc2vs4locvu"]
+[gd_scene load_steps=9 format=3 uid="uid://c1xc2vs4locvu"]
 
-[ext_resource type="Script" uid="uid://dxfpq87ug4hwd" path="res://Scripts/Shop.gd" id="1_a0mxf"]
+[ext_resource type="Script" uid="uid://dxfpq87ug4hwd" path="res://Scripts/Managers/ShopManager.gd" id="1_a0mxf"]
 [ext_resource type="PackedScene" uid="uid://dtwfejpx0siil" path="res://Scenes/tattoo_shop_item.tscn" id="2_io27d"]
+[ext_resource type="Script" uid="uid://dmj53yextnkv8" path="res://Scripts/ShopItemGenerator.gd" id="2_s8dlv"]
 [ext_resource type="PackedScene" uid="uid://bojs75ufi7qte" path="res://Scenes/artifact_shop_item.tscn" id="3_io27d"]
+[ext_resource type="Script" uid="uid://dgsjxeh7dlgpr" path="res://Scripts/PurchaseHandler.gd" id="3_tyrku"]
+[ext_resource type="Script" uid="uid://d2bneyfafkur5" path="res://Scripts/Managers/ToothDrawerManager.gd" id="4_5xp22"]
 [ext_resource type="PackedScene" uid="uid://bok4q1ulrp1b3" path="res://Scenes/tooltip.tscn" id="4_fdj0q"]
+[ext_resource type="Script" uid="uid://demivqyyt56jc" path="res://Scripts/ShopUI.gd" id="5_ow1eo"]
 
 [node name="Shop" type="CanvasLayer"]
 script = ExtResource("1_a0mxf")
 
-[node name="ShopContainer" type="VBoxContainer" parent="."]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -408.5
-offset_top = -290.0
-offset_right = 408.5
-offset_bottom = 210.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 20
+[node name="ShopItemGenerator" type="Node" parent="."]
+script = ExtResource("2_s8dlv")
 
-[node name="MoneyDisplay" type="HBoxContainer" parent="ShopContainer"]
-layout_mode = 2
-theme_override_constants/separation = 10
-alignment = 1
+[node name="PurchaseHandler" type="Node" parent="."]
+script = ExtResource("3_tyrku")
 
-[node name="MoneyIcon" type="Label" parent="ShopContainer/MoneyDisplay"]
-layout_mode = 2
-text = "$$$$"
-
-[node name="MoneyLabel" type="Label" parent="ShopContainer/MoneyDisplay"]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.878431, 0.0862745, 1)
-text = "0"
-
-[node name="TattooSection" type="VBoxContainer" parent="ShopContainer"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="TattooContainer" type="HBoxContainer" parent="ShopContainer/TattooSection"]
-layout_mode = 2
-theme_override_constants/separation = 15
-alignment = 1
-
-[node name="TattooSlot1" parent="ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
-layout_mode = 2
-
-[node name="TattooSlot2" parent="ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
-layout_mode = 2
-
-[node name="TattooSlot3" parent="ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
-layout_mode = 2
-
-[node name="TattooSlot4" parent="ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
-layout_mode = 2
-
-[node name="TattooSlot5" parent="ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
-layout_mode = 2
-
-[node name="ArtifactSection" type="VBoxContainer" parent="ShopContainer"]
-layout_mode = 2
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="ArtifactContainer" type="HBoxContainer" parent="ShopContainer/ArtifactSection"]
-layout_mode = 2
-theme_override_constants/separation = 20
-
-[node name="ArtifactSlot1" parent="ShopContainer/ArtifactSection/ArtifactContainer" instance=ExtResource("3_io27d")]
-layout_mode = 2
-
-[node name="ArtifactSlot2" parent="ShopContainer/ArtifactSection/ArtifactContainer" instance=ExtResource("3_io27d")]
-layout_mode = 2
-
-[node name="ArtifactSlot3" parent="ShopContainer/ArtifactSection/ArtifactContainer" instance=ExtResource("3_io27d")]
-layout_mode = 2
-
-[node name="ClearToothButton" type="Button" parent="ShopContainer/ArtifactSection/ArtifactContainer"]
-custom_minimum_size = Vector2(200, 48)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-text = "Clear    Tooth   -   10    gold"
-
-[node name="TeethDrawer" type="Control" parent="."]
+[node name="TeethDrawerManager" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.5
@@ -97,8 +30,9 @@ offset_right = 640.0
 offset_bottom = 492.0
 grow_horizontal = 2
 grow_vertical = 0
+script = ExtResource("4_5xp22")
 
-[node name="ColorRect" type="ColorRect" parent="TeethDrawer"]
+[node name="ColorRect" type="ColorRect" parent="TeethDrawerManager"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -107,21 +41,107 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.43, 0.26746, 0.0817, 1)
 
-[node name="TeethContainer" type="Node2D" parent="TeethDrawer"]
+[node name="TeethContainer" type="Node2D" parent="TeethDrawerManager"]
 
-[node name="Tooltip" parent="." instance=ExtResource("4_fdj0q")]
+[node name="ShopUI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("5_ow1eo")
 
-[node name="ExitButton" type="Button" parent="."]
+[node name="ShopContainer" type="VBoxContainer" parent="ShopUI"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 211.5
+offset_top = 50.0
+offset_right = 1028.5
+offset_bottom = 550.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="MoneyDisplay" type="HBoxContainer" parent="ShopUI/ShopContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="MoneyIcon" type="Label" parent="ShopUI/ShopContainer/MoneyDisplay"]
+layout_mode = 2
+text = "$$$$"
+
+[node name="MoneyLabel" type="Label" parent="ShopUI/ShopContainer/MoneyDisplay"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.878431, 0.0862745, 1)
+text = "0"
+
+[node name="TattooSection" type="VBoxContainer" parent="ShopUI/ShopContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TattooContainer" type="HBoxContainer" parent="ShopUI/ShopContainer/TattooSection"]
+layout_mode = 2
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="TattooSlot1" parent="ShopUI/ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
+layout_mode = 2
+
+[node name="TattooSlot2" parent="ShopUI/ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
+layout_mode = 2
+
+[node name="TattooSlot3" parent="ShopUI/ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
+layout_mode = 2
+
+[node name="TattooSlot4" parent="ShopUI/ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
+layout_mode = 2
+
+[node name="TattooSlot5" parent="ShopUI/ShopContainer/TattooSection/TattooContainer" instance=ExtResource("2_io27d")]
+layout_mode = 2
+
+[node name="ArtifactSection" type="VBoxContainer" parent="ShopUI/ShopContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="ArtifactContainer" type="HBoxContainer" parent="ShopUI/ShopContainer/ArtifactSection"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ArtifactSlot1" parent="ShopUI/ShopContainer/ArtifactSection/ArtifactContainer" instance=ExtResource("3_io27d")]
+layout_mode = 2
+
+[node name="ArtifactSlot2" parent="ShopUI/ShopContainer/ArtifactSection/ArtifactContainer" instance=ExtResource("3_io27d")]
+layout_mode = 2
+
+[node name="ArtifactSlot3" parent="ShopUI/ShopContainer/ArtifactSection/ArtifactContainer" instance=ExtResource("3_io27d")]
+layout_mode = 2
+
+[node name="ClearToothButton" type="Button" parent="ShopUI/ShopContainer/ArtifactSection/ArtifactContainer"]
 custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+text = "Clear    Tooth   -   10    gold"
+
+[node name="Tooltip" parent="ShopUI" instance=ExtResource("4_fdj0q")]
+
+[node name="ExitButton" type="Button" parent="ShopUI"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -249.0
-offset_top = -81.0
-offset_right = -25.0
-offset_bottom = -25.0
+offset_left = 991.0
+offset_top = 599.0
+offset_right = 1215.0
+offset_bottom = 655.0
 grow_horizontal = 0
 grow_vertical = 0
 size_flags_horizontal = 4
