@@ -138,11 +138,25 @@ func _on_tattoo_dragged(tattoo_data: TattooData, source_control):
 	emit_signal("tattoo_dragged", tattoo_data, source_control)
 
 func _on_drag_started(tattoo_data: TattooData):
-	print("Drag started: ", tattoo_data.name)
+	print("🎯 Drag started: ", tattoo_data.name, " - Opening drawer")
 	force_hide_tooltips()
+	
+	# Open the drawer when drag starts
+	var shop_manager = get_parent()
+	if shop_manager and shop_manager.has_method("open_drawer"):
+		print("🎯 Opening drawer for tattoo drag")
+		shop_manager.open_drawer()
 
 func _on_drag_ended():
-	print("Drag ended")
+	print("🎯 Drag ended - Closing drawer")
+	
+	# Close the drawer when drag ends
+	var shop_manager = get_parent()
+	if shop_manager and shop_manager.has_method("close_drawer"):
+		print("🎯 Closing drawer after drag")
+		# Add a small delay to allow drop to complete
+		await get_tree().create_timer(0.2).timeout
+		shop_manager.close_drawer()
 
 # === PURCHASE SYSTEM ===
 

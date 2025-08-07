@@ -10,6 +10,8 @@ var tattoo_data: TattooData
 var is_dragging = false
 var is_mouse_inside = false
 var tooltip_shown = false
+var purchase_count = 0
+var max_purchases = 1
 
 @onready var icon = $Icon
 @onready var cost_label = $CostLabel
@@ -31,6 +33,7 @@ func _ready():
 # ADD THIS FUNCTION
 func setup_tattoo(data: TattooData):
 	tattoo_data = data
+	purchase_count = 0  # Reset purchase count when setting up
 	
 	print("Setting up tattoo: ", tattoo_data.name)
 	
@@ -39,6 +42,27 @@ func setup_tattoo(data: TattooData):
 	
 	if cost_label:
 		cost_label.text = str(tattoo_data.cost) + " Gold"
+	
+	update_visual_state()
+
+func mark_as_purchased():
+	purchase_count += 1
+	update_visual_state()
+	print("📦 Tattoo purchased count: ", purchase_count, "/", max_purchases)
+
+func update_visual_state():
+	if purchase_count >= max_purchases:
+		# Gray out and disable
+		modulate = Color(0.5, 0.5, 0.5, 0.7)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if cost_label:
+			cost_label.text = "SOLD OUT"
+	else:
+		# Normal appearance
+		modulate = Color.WHITE
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		if tattoo_data and cost_label:
+			cost_label.text = str(tattoo_data.cost) + " Gold"
 
 func _gui_input(event):
 	if event is InputEventMouseButton:
@@ -55,8 +79,15 @@ func _gui_input(event):
 					emit_signal("drag_ended")
 
 func _get_drag_data(position):
-	if tattoo_data:
+	if tattoo_data and purchase_count < max_purchases:
 		print("🎯 DRAGGING: ", tattoo_data.name)
+		
+		# CHECK IF WE CAN AFFORD IT FIRST
+		var shop_manager = get_tree().get_first_node_in_group("shop")
+		if shop_manager and shop_manager.has_method("can_afford_tattoo"):
+			if not shop_manager.can_afford_tattoo(tattoo_data):
+				print("❌ Cannot afford tattoo: ", tattoo_data.name)
+				return null
 		
 		tooltip_shown = false
 		emit_signal("drag_started", tattoo_data)

@@ -19,6 +19,7 @@ script = ExtResource("2_s8dlv")
 script = ExtResource("3_tyrku")
 
 [node name="TeethDrawerManager" type="Control" parent="."]
+z_index = 10
 layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.5

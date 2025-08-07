@@ -322,12 +322,27 @@ func _on_tooth_selected_from_shop(slot_index: int):
 		_on_artifact_used(artifact.id, tooth_identifier)
 
 func _on_shop_closed(teeth_mapping: Dictionary, purchased_artifacts: Array):
+	print("🏪 Shop closed with ", purchased_artifacts.size(), " new artifacts")
 	
 	# Apply new tattoos and artifacts
 	if tooth_manager:
 		tooth_manager.apply_tattoo_mapping(teeth_mapping)
+	
 	if effect_manager:
 		effect_manager.add_artifacts(purchased_artifacts)
+		
+		# Get all owned artifacts after adding
+		var all_artifacts = effect_manager.get_all_owned_artifacts()
+		print("🎯 Total owned artifacts after shop: ", all_artifacts.size())
+		for artifact in all_artifacts:
+			print("  - ", artifact.name, " (active: ", artifact.is_active_artifact, ", uses: ", artifact.uses_remaining, ")")
+		
+		# UPDATE ARTIFACT UI - THIS WAS MISSING!
+		if artifact_ui:
+			print("🎯 Setting up artifact UI with ", all_artifacts.size(), " artifacts")
+			artifact_ui.setup_artifacts(all_artifacts)
+		else:
+			print("❌ ArtifactUI not found!")
 	
 	# Start background transition back to game
 	if background_manager:

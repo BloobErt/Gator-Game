@@ -114,17 +114,8 @@ func get_effective_max_tattoos() -> int:
 		print("  🔧 Using modified max_tattoos: ", max_tattoos)
 		return max_tattoos
 	
-	# Then check the GameManager's modification dictionary as backup
-	var game_manager = get_node("/root/Node3D")  # Adjust path as needed
-	if game_manager and game_manager.has_method("get") and game_manager.modified_teeth:
-		var tooth_key = "slot_" + str(slot_index)
-		if game_manager.modified_teeth.has(tooth_key):
-			var modification = game_manager.modified_teeth[tooth_key]
-			if modification.has("max_tattoos"):
-				print("  🔧 Using GameManager modified max_tattoos: ", modification.max_tattoos)
-				return modification.max_tattoos
-	
-	# Return default
+	# For now, just return the default since GameManager doesn't track modified_teeth
+	# This will be handled by the EffectManager when artifacts are used
 	print("  📝 Using default max_tattoos: ", max_tattoos)
 	return max_tattoos
 

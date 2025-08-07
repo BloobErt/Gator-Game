@@ -72,11 +72,23 @@ func setup_physics_teeth():
 		print("ERROR: teeth_container is null!")
 		return
 	
+	# SAVE EXISTING TATTOO DATA BEFORE CLEARING
+	var saved_tattoos = {}
+	for i in range(teeth_slots.size()):
+		if i < teeth_slots.size() and is_instance_valid(teeth_slots[i]):
+			var tooth = teeth_slots[i]
+			if tooth.applied_tattoos.size() > 0:
+				saved_tattoos[i] = tooth.applied_tattoos.duplicate()
+				print("💾 Saved ", tooth.applied_tattoos.size(), " tattoos from slot ", i)
+	
 	# Clear any existing teeth
 	for child in teeth_container.get_children():
 		child.queue_free()
 	
 	teeth_slots.clear()
+	
+	# Wait for cleanup
+	await get_tree().process_frame
 	
 	# Base grid on drawer size with safe margins
 	var drawer_size = size
@@ -115,8 +127,19 @@ func setup_physics_teeth():
 			physics_tooth.gui_input.connect(_on_tooth_clicked_for_artifact.bind(i))
 		
 		teeth_slots.append(physics_tooth)
+		
+		# RESTORE SAVED TATTOOS
+		if saved_tattoos.has(i):
+			var saved_tattoo_list = saved_tattoos[i]
+			for tattoo_data in saved_tattoo_list:
+				physics_tooth.applied_tattoos.append(tattoo_data)
+				physics_tooth.create_tattoo_visual(tattoo_data)
+			physics_tooth.update_display()
+			print("🔄 Restored ", saved_tattoo_list.size(), " tattoos to slot ", i)
 	
 	print("Finished creating ", teeth_slots.size(), " physics teeth")
+	if saved_tattoos.size() > 0:
+		print("✅ Restored tattoos to ", saved_tattoos.size(), " slots")
 
 # === DRAWER CONTROL ===
 
@@ -128,13 +151,20 @@ func open_drawer():
 	is_drawer_open = true
 	drawer_busy = true
 	
+	# RECREATE ALL TEETH - this fixes the positioning issues
+	print("🔄 Recreating teeth for fresh drawer opening")
+	setup_physics_teeth()
+	
+	# BRING DRAWER TO FRONT
+	move_to_front()
+	
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
 	
 	tween.tween_property(self, "position", drawer_open_pos, 0.6)
 	
-	# Enable physics and slam teeth
+	# Enable physics and slam teeth (now with fresh teeth)
 	for tooth in teeth_slots:
 		tooth.freeze = false
 		tooth.gravity_scale = 0
@@ -150,15 +180,8 @@ func close_drawer():
 	print("Closing drawer...")
 	drawer_busy = true
 	
-	# Return teeth to grid first
-	return_teeth_to_grid()
-	await get_tree().create_timer(1.0).timeout
-	
-	if not is_drawer_open:
-		drawer_busy = false
-		return
-	
-	# Slide drawer down
+	# Since we recreate teeth on open, we don't need to carefully return them to grid
+	# Just slide the drawer down
 	is_drawer_open = false
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_QUART)
@@ -167,6 +190,7 @@ func close_drawer():
 	tween.tween_property(self, "position", drawer_closed_pos, 0.4)
 	await tween.finished
 	drawer_busy = false
+	print("✅ Drawer closed")
 
 func slam_teeth_to_front():
 	if not is_drawer_open or drawer_busy:
@@ -190,20 +214,39 @@ func slam_teeth_to_front():
 func return_teeth_to_grid():
 	print("Returning teeth to grid...")
 	
+	# Force all teeth to freeze and reset physics
+	for tooth in teeth_slots:
+		if is_instance_valid(tooth):
+			tooth.freeze = true
+			tooth.linear_velocity = Vector2.ZERO
+			tooth.angular_velocity = 0.0
+			tooth.rotation = 0.0
+	
+	# Wait a frame for physics to settle
+	await get_tree().process_frame
+	
+	# Calculate proper grid positions (same as setup)
 	var drawer_size = size
 	var grid_cols = 4
 	var grid_rows = 4
 	
-	var usable_width = drawer_size.x * 0.8
-	var usable_height = drawer_size.y * 0.7
+	var margin_x = 60
+	var margin_y = 60
+	
+	var usable_width = drawer_size.x - (margin_x * 2)
+	var usable_height = drawer_size.y - (margin_y * 2)
 	
 	var slot_width = usable_width / grid_cols
 	var slot_height = usable_height / grid_rows
 	
-	var start_x = (drawer_size.x - usable_width) / 2
-	var start_y = (drawer_size.y - usable_height) / 2
+	var start_x = margin_x
+	var start_y = margin_y
 	
+	# Reset each tooth to its original grid position
 	for i in range(teeth_slots.size()):
+		if i >= teeth_slots.size() or not is_instance_valid(teeth_slots[i]):
+			continue
+			
 		var tooth = teeth_slots[i]
 		var row = i / grid_cols
 		var col = i % grid_cols
@@ -211,7 +254,15 @@ func return_teeth_to_grid():
 		var target_pos = Vector2(start_x + col * slot_width + slot_width/2, 
 								start_y + row * slot_height + slot_height/2)
 		
+		# Force immediate position reset
+		tooth.position = target_pos
+		tooth.rotation = 0.0
+		tooth.original_position = target_pos
+		
+		# Use the tooth's own method for smooth return
 		tooth.return_to_grid(target_pos)
+	
+	print("✅ All teeth returned to grid positions")
 
 # === ARTIFACT SELECTION ===
 
@@ -278,18 +329,31 @@ func get_teeth_slots() -> Array:
 
 func get_teeth_tattoo_mapping() -> Dictionary:
 	var mapping = {}
-	var game_tooth_names = ["Left", "MidLeft", "MidRight", "Right", 
-						   "LeftD", "RightD",
-						   "L1", "L2", "L3", "L4", "L5",
-						   "R1", "R2", "R3", "R4", "R5"]
+	var game_tooth_names = ["ToothFrontLeft", "ToothFrontMidLeft", "ToothFrontMidRight", "ToothFrontRight", 
+						   "ToothDiagonalLeft", "ToothDiagonalRight",
+						   "ToothSideL1", "ToothSideL2", "ToothSideL3", "ToothSideL4", "ToothSideL5",
+						   "ToothSideR1", "ToothSideR2", "ToothSideR3", "ToothSideR4", "ToothSideR5"]
+	
+	var used_tooth_names = []
 	
 	for i in range(teeth_slots.size()):
 		var slot = teeth_slots[i]
 		if slot.applied_tattoos.size() > 0:
-			var random_tooth = game_tooth_names[randi() % game_tooth_names.size()]
-			mapping[random_tooth] = slot.applied_tattoos.duplicate()
-			print("Slot ", i, " with ", slot.applied_tattoos.size(), " tattoos assigned to tooth: ", random_tooth)
+			# Find an unused game tooth name
+			var available_names = []
+			for tooth_name in game_tooth_names:
+				if not used_tooth_names.has(tooth_name):
+					available_names.append(tooth_name)
+			
+			if available_names.size() > 0:
+				var selected_tooth = available_names[randi() % available_names.size()]
+				used_tooth_names.append(selected_tooth)
+				mapping[selected_tooth] = slot.applied_tattoos.duplicate()
+				print("Slot ", i, " with ", slot.applied_tattoos.size(), " tattoos assigned to tooth: ", selected_tooth)
+			else:
+				print("⚠️ No more available tooth names for slot ", i)
 	
+	print("Final mapping: ", mapping.size(), " teeth with tattoos")
 	return mapping
 
 # === DEBUG ===
@@ -307,3 +371,14 @@ func debug_teeth_state():
 func recreate_all_teeth():
 	print("Recreating all teeth...")
 	setup_physics_teeth()
+
+func _input(event):
+	# Close drawer if clicking outside when it's open
+	if is_drawer_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# Check if the click is outside the drawer area
+		var mouse_pos = get_local_mouse_position()
+		var drawer_rect = Rect2(Vector2.ZERO, size)
+		
+		if not drawer_rect.has_point(mouse_pos):
+			print("🎯 Clicked outside drawer - closing")
+			close_drawer()

@@ -129,11 +129,15 @@ func style_artifact_background(panel: Panel, artifact: ArtifactData):
 
 func _on_artifact_icon_input(event: InputEvent, artifact: ArtifactData):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		print("Artifact icon clicked: ", artifact.name)
+		print("🎯 Artifact icon clicked: ", artifact.name)
+		print("🎯 Artifact is_active_artifact: ", artifact.is_active_artifact)
+		print("🎯 Artifact uses_remaining: ", artifact.uses_remaining)
 		
 		if needs_target_selection(artifact):
+			print("🎯 Artifact needs target selection")
 			start_tooth_selection_with_drawer(artifact)
 		else:
+			print("🎯 Using artifact immediately")
 			# Use artifact immediately
 			emit_signal("artifact_used", artifact.id, "")
 
@@ -141,15 +145,20 @@ func needs_target_selection(artifact: ArtifactData) -> bool:
 	return artifact.id in ["tooth_modifier"]
 
 func start_tooth_selection_with_drawer(artifact: ArtifactData):
-	print("Starting tooth selection with drawer for: ", artifact.name)
+	print("🎯 Starting tooth selection with drawer for: ", artifact.name)
+	print("🎯 Shop reference: ", shop_reference)
 	
 	current_selection_artifact = artifact
 	
-	# NEW: Updated method call
-	if shop_reference and shop_reference.has_method("open_drawer_for_artifact_selection"):
-		shop_reference.open_drawer_for_artifact_selection(artifact)
+	if shop_reference:
+		print("🎯 Shop reference found, checking for method...")
+		if shop_reference.has_method("open_drawer_for_artifact_selection"):
+			print("🎯 Calling open_drawer_for_artifact_selection")
+			shop_reference.open_drawer_for_artifact_selection(artifact)
+		else:
+			print("❌ Method open_drawer_for_artifact_selection not found!")
 	else:
-		print("ERROR: Cannot open shop drawer for artifact selection!")
+		print("❌ No shop reference found!")
 
 # This is called when the shop emits tooth_selected_for_artifact
 func _on_tooth_selected_from_drawer(tooth_slot_index: int):
