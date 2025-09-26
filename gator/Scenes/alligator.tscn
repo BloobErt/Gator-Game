@@ -1,6 +1,6 @@
 [gd_scene load_steps=57 format=3 uid="uid://b8a1vsh2qydig"]
 
-[ext_resource type="Script" uid="uid://dflsbiautig3x" path="res://Scripts/Managers/GameManager.gd" id="1_v0ff7"]
+[ext_resource type="Script" uid="uid://dhex6tl1m8ggj" path="res://Scripts/Managers/GameManager.gd" id="1_v0ff7"]
 [ext_resource type="PackedScene" uid="uid://c1xc2vs4locvu" path="res://Scenes/shop.tscn" id="2_6ohho"]
 [ext_resource type="Script" uid="uid://cqullft7cwvn6" path="res://Scripts/Managers/ProgressionManager.gd" id="2_ugce8"]
 [ext_resource type="PackedScene" uid="uid://qiletc3vogi" path="res://Scenes/game_ui.tscn" id="2_vc6s6"]
@@ -10,8 +10,8 @@
 [ext_resource type="Script" uid="uid://blpl7rdu1exwl" path="res://Scripts/TeethClickDetector.gd" id="4_0i5w4"]
 [ext_resource type="Script" uid="uid://b3xbao3dysw88" path="res://Scripts/Managers/ToothManager.gd" id="4_w5fp6"]
 [ext_resource type="PackedScene" uid="uid://1yrva4up37ii" path="res://Scenes/AlligatorBetter.tscn" id="5_btjni"]
-[ext_resource type="Script" uid="uid://c6qp0njc4udis" path="res://Scripts/Managers/EffectManager.gd" id="5_nwgom"]
-[ext_resource type="Script" uid="uid://dnkrfx8u04vd3" path="res://Scripts/Managers/UIManager.gd" id="6_l723h"]
+[ext_resource type="Script" uid="uid://cjiungyjn3p4v" path="res://Scripts/Managers/EffectManager.gd" id="5_nwgom"]
+[ext_resource type="Script" uid="uid://bjxuxvg0sygum" path="res://Scripts/Managers/UIManager.gd" id="6_l723h"]
 [ext_resource type="Texture2D" uid="uid://dn7ug31lcpkqu" path="res://Assets/ingame1.png" id="7_0i5w4"]
 [ext_resource type="Script" uid="uid://b5y3a5ihfpmqd" path="res://Scripts/Managers/AudioManager.gd" id="7_5tnkh"]
 [ext_resource type="Texture2D" uid="uid://dapjvbyq4esfq" path="res://Assets/ingame6.png" id="7_r6lpp"]
@@ -286,7 +286,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("7_r6lpp")
+texture = ExtResource("7_0i5w4")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Camera3D/Background"]
 root_node = NodePath("../TextureRect")
