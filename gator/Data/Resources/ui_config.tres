@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="UIConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UIConfig" load_steps=2 format=3 uid="uid://6un6javcsp7g"]
 
-[ext_resource type="Script" path="res://Scripts/Classes/UIConfig.gd" id="1_wmi27"]
+[ext_resource type="Script" uid="uid://dgtqefhe8vqt3" path="res://Scripts/Classes/UIConfig.gd" id="1_frtqm"]
 
 [resource]
-script = ExtResource("1_wmi27")
+script = ExtResource("1_frtqm")
 score_popup_duration = 1.0
 score_popup_rise_distance = 100.0
 tooltip_fade_in_time = 0.2
@@ -34,3 +34,4 @@ high_contrast_mode = false
 large_text_mode = false
 reduce_motion = false
 colorblind_friendly = false
+metadata/_custom_type_script = "uid://dgtqefhe8vqt3"

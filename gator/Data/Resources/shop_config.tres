@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="ShopConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ShopConfig" load_steps=2 format=3 uid="uid://dyojj5etgx26k"]
 
-[ext_resource type="Script" path="res://Scripts/Classes/ShopConfig.gd" id="1_ps51y"]
+[ext_resource type="Script" uid="uid://cvd1sbhvmapbt" path="res://Scripts/Classes/ShopConfig.gd" id="1_3r72g"]
 
 [resource]
-script = ExtResource("1_ps51y")
+script = ExtResource("1_3r72g")
 tattoo_slots = 5
 artifact_slots = 3
 enable_tooth_clearing = true
@@ -45,3 +45,4 @@ enable_discounts = true
 discount_chance = 0.1
 discount_amount = 0.25
 enable_bundles = false
+metadata/_custom_type_script = "uid://cvd1sbhvmapbt"
