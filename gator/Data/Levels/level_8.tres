@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Classes/LevelData.gd" id="1_qj1rq"]
+
+[resource]
+script = ExtResource("1_qj1rq")
+level_number = 8
+display_name = "Level 8"
+target_score = 1708
+bonus_score_threshold = 150
+perfect_score_threshold = 200
+tooth_value_min = 19
+tooth_value_max = 50
+num_multiplier_teeth = 4
+multiplier_values = Array[float]([2.0, 2.0])
+bite_tooth_count = 1
+special_rules = Array[String]([])
+starting_artifacts = Array[String]([])
+unlocked_tattoo_types = Array[String](["common"])
+unlocked_artifact_types = Array[String](["common", "rare"])
+background_theme = "swamp"
+level_description = "Click teeth to score points, but avoid the bite tooth!"
+completion_message = "Well done! Moving to the next level."
+completion_money_bonus = 200
+perfect_completion_bonus = 100
+unlocks_on_completion = Array[String]([])

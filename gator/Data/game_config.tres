@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3 uid="uid://vl7uh6e4sn8y"]
+[gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://duwrofhquxwwl" path="res://Scripts/Classes/GameConfig.gd" id="1_rfpkj"]
+[ext_resource type="Script" path="res://Scripts/Classes/GameConfig.gd" id="1_eptum"]
 
 [resource]
-script = ExtResource("1_rfpkj")
+script = ExtResource("1_eptum")
 max_rounds_per_level = 5
 base_score_target = 100
 score_multiplier_per_level = 1.5
@@ -32,4 +32,3 @@ ui_volume = 0.7
 debug_mode = false
 show_fps = false
 unlimited_money = false
-metadata/_custom_type_script = "uid://duwrofhquxwwl"
